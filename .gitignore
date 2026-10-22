@@ -1,0 +1,10 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+.ipynb_checkpoints/
+registry_verification/
+examples/outputs/
+.pypirc
