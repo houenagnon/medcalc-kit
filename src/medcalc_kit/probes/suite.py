@@ -17,12 +17,14 @@ from typing import Any
 
 import pandas as pd
 
-from medcalc_kit.calculators import derive
+from medcalc_kit.calculators import CALCULATORS, derive
 from medcalc_kit.data import Example, MedCalcDataset, as_example
 from medcalc_kit.probes import arithmetic, end_to_end, extraction, knowledge, substitution
 from medcalc_kit.probes.common import Item, as_items, items_frame
 
 ALL_PROBES = ("E", "K", "S", "A", "E2E")
+# Probes of the steps of a calculation: they need the registry, so they cover the 33 equation-based calculators.
+STEP_PROBES = ("E", "K", "S", "A")
 _MODULES = {"E": extraction, "K": knowledge, "S": substitution, "A": arithmetic, "E2E": end_to_end}
 
 
@@ -34,6 +36,10 @@ def _frame(data) -> pd.DataFrame | None:
 
 class ProbeSuite:
     """Builds the items of several probes at once, giving each probe the context it needs.
+
+    E2E items are built for every example of the benchmark. The step probes (E, K, S, A) need the reference
+    computation, so they are built only for the 33 equation-based calculators of the registry; other examples
+    (rule-based scores, dates) get E2E only.
 
     probes:  probe names ("E", "K", "S", "A", "E2E"), or {label: options} where options are keyword arguments of
              that probe's build() plus an optional "task" (the probe to use; default: the label). Labels let you
@@ -86,9 +92,9 @@ class ProbeSuite:
 
         >>> items = ProbeSuite("E2E").build(mk.data.demo())
         >>> list(items.columns)
-        ['item_id', 'probe', 'example_id', 'calculator_id', 'calculator_name', 'max_new_tokens', 'messages',
-         'reference']
-        >>> {k: round(v, 2) for k, v in items.loc[0, "reference"].items()}
+        ['item_id', 'probe', 'example_id', 'calculator_id', 'calculator_name', 'template', 'template_hash',
+         'max_new_tokens', 'messages', 'reference']
+        >>> {k: round(v, 2) for k, v in items.loc[0, "reference"].items() if k != "answer_type"}
         {'ground_truth': 79.88, 'lower': 75.89, 'upper': 83.88}
         >>> list(ProbeSuite("E2E").build(mk.data.demo(), as_frame=False))
         ['E2E']
@@ -104,6 +110,8 @@ class ProbeSuite:
             build = _MODULES[task].build
             items = []
             for ex in exs:
+                if task != "E2E" and ex.calculator_id not in CALCULATORS:
+                    continue                                  # step probes need the registry
                 if task == "E":
                     e_opts = {k: v for k, v in opts.items() if k != "fields"}
                     item = build(ex, opts.get("fields") or fields.get(ex.calculator_id), label=label, **e_opts)

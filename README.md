@@ -1,10 +1,14 @@
 # medcalc-kit
 
-Data, executable calculators and **diagnostic probes** for [MedCalc-Bench](https://huggingface.co/datasets/nsk7153/MedCalc-Bench-Verified).
+An evaluator for [MedCalc-Bench](https://huggingface.co/datasets/nsk7153/MedCalc-Bench-Verified), overall and step
+by step.
 
 MedCalc-Bench asks a model to read a patient note and compute a clinical score (creatinine clearance, anion gap,
-QTc, MELD Na…). A wrong final answer can come from several distinct failures. `medcalc-kit` splits the task into
-independent probes so that each competence can be measured on its own:
+QTc, CHA2DS2-VASc, due date…). `medcalc-kit` evaluates a model at two levels:
+
+- **general**: the original task on the whole benchmark (55 calculators, 1,100 test examples);
+- **step by step**: a wrong final answer can come from several distinct failures, so on the 33 equation-based
+  calculators the task is split into independent probes, each measuring one competence:
 
 | probe | name          | the model is given…                         | it must…                                  |
 |-------|---------------|---------------------------------------------|-------------------------------------------|
@@ -29,6 +33,8 @@ From source: `pip install -e ".[dev]"` then `pytest`.
 
 ## Documentation
 
+- **[Evaluation notebook](https://github.com/houenagnon/medcalc-kit/blob/main/examples/evaluate_model.ipynb)**: `evaluate_model` on MedCalc-Bench with
+  Qwen2.5-3B-Instruct, general and step-by-step results, executed.
 - **[Tutorial notebook](https://github.com/houenagnon/medcalc-kit/blob/main/examples/tutorial.ipynb)**: the whole library on the benchmark, with a real model
   (Qwen2.5-3B-Instruct), executed.
 - **[User guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md)**: concepts, the objects you handle, the probes and their error types, using your own
@@ -40,14 +46,31 @@ From source: `pip install -e ".[dev]"` then `pytest`.
 
 ```python
 import medcalc_kit as mk
+from medcalc_kit.generation.hf import HFBackend          # needs medcalc-kit[hf]
 
-ds = mk.load(equation_only=True)          # MedCalc-Bench-Verified at a pinned revision (or mk.data.demo() offline)
-items = mk.ProbeSuite(schema=ds).build(ds.filter(split="test"))   # one row per (example, probe)
-
-mk.run_items(items, "outputs.jsonl", model, batch_size=16)        # any model, resumable
-scores = mk.score_records("outputs.jsonl", items, condition={"model": "my-model"})
-mk.summary(scores)                        # per probe: well-formed answers, competence, overall accuracy
+model = HFBackend("Qwen/Qwen2.5-7B-Instruct", device="cuda:0")
+report = mk.evaluate_model(model, batch_size=16)          # downloads the benchmark, generates, scores (resumable)
+report                                                    # general score + score of each step
 ```
+
+```text
+MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
+  general (end to end): …% of 1100 examples (55 calculators)
+  step by step (660 examples of equation-based calculators):
+    E    extraction         …%
+    K    formula knowledge  …%
+    S    substitution       …%
+    A    arithmetic         …%
+    E2E  end to end         …%
+```
+
+`report.general` (per category), `report.steps`, `report.by_calculator` (where the chain breaks),
+`report.examples` (first failing step of each example), `report.consistency` and `report.scores` (every answer) are
+DataFrames, also saved as CSV in `medcalc_eval/<model>/`. With `prompt_variants=3`, every prompt is also asked in two
+paraphrases and `report.prompt_sensitivity` shows how much each score depends on the wording; the prompts are designed
+to guide the answer format, never the competence measured
+([guide]({B}/docs/guide.md#10-prompt-design-and-robustness)). `per_calculator=5` evaluates a quick subset first. See the
+[evaluation notebook](https://github.com/houenagnon/medcalc-kit/blob/main/examples/evaluate_model.ipynb) for a full run.
 
 `model` is a Hugging Face model, any object with `generate_batch` or `generate`, or a plain function:
 
@@ -61,6 +84,34 @@ def model(messages, max_new_tokens):                     # e.g. an API client
 
 Answers collected another way only need an `item_id` and a `text` column:
 `mk.score_records(pd.DataFrame({"item_id": ..., "text": ...}), items)`.
+
+## The benchmark and your own splits
+
+```python
+ds = mk.load()                                       # MedCalcDataset(11638 examples, 55 calculators; train: 10538, test: 1100)
+ds.filter(split="test", category=["lab test", "physical"], where=lambda df: df["Note Type"] == "Extracted")
+ds = ds.split_off("dev", fraction=0.1, exclude_leaks=True)   # dev from train, stratified, never leaking into test
+folds = ds.folds(5)                                  # k-fold over train
+ds = ds.assign_split(my_ids, "hard")                 # any split from example ids
+ds.save_splits("splits.csv")                         # ...and mk.load().with_splits("splits.csv") restores it
+ds = ds + mk.data.from_records(my_rows)              # add your own examples
+report = mk.evaluate_model(model, dataset=ds, split="dev")
+```
+
+See the [user guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md#3-working-with-the-benchmark-and-splits).
+
+## Building blocks
+
+`evaluate_model` chains `load`, `ProbeSuite.build`, `run_items`, `score_records` and `summary`, which can be used on
+their own:
+
+```python
+ds = mk.load()                                                     # 55 calculators (equation_only=True: 33)
+items = mk.ProbeSuite(schema=ds).build(ds.filter(split="test"))   # one row per (example, probe)
+mk.run_items(items, "outputs.jsonl", model, batch_size=16)        # any model, resumable
+scores = mk.score_records("outputs.jsonl", items, condition={"model": "my-model"})
+mk.summary(scores)                        # per probe: well-formed answers, competence, overall accuracy
+```
 
 ## Look inside
 
@@ -77,7 +128,7 @@ mk.score(item, model_text)                      # {'format_valid', 'correct', 'e
 Each answer is first classified as `empty`, `truncated`, `degenerate` (looping), `format_invalid` or
 `well_formed`; only well-formed answers can be correct. `competence` is the accuracy among well-formed answers, so
 format failures and reasoning failures are reported separately. How each probe scores, its error types and all
-options are in the [user guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md#4-the-five-probes).
+options are in the [user guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md#5-the-five-probes).
 
 ## Everything is a parameter
 
@@ -95,6 +146,7 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 
 | module | content |
 |---|---|
+| `medcalc_kit.benchmark` | `evaluate_model`, `EvaluationReport` |
 | `medcalc_kit.data` | `load`, `demo`, `MedCalcDataset`, `Example`; leakage and quality control (`usable_train_pool`, `flag_train_rows`) |
 | `medcalc_kit.calculators` | `derive` (`.to_frame()`), `table`, `get`, `verify_registry`; `python -m medcalc_kit.calculators.verify` |
 | `medcalc_kit.probes` | `extraction`, `knowledge`, `substitution`, `arithmetic`, `end_to_end` (each: `build`, `score`, `reference_answer`), `ProbeSuite`, `score`, `prompt`, `read_items` / `write_items` |

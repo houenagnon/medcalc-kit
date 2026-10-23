@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.0 — unreleased
+An evaluator of MedCalc-Bench, overall and step by step.
+- `mk.evaluate_model(model)`: builds every item, generates (resumable), scores, and returns an `EvaluationReport`:
+  `general` (end-to-end accuracy per category), `steps` (E, K, S, A and E2E on the same examples), `by_calculator`,
+  `examples` (first failing step of each example), `first_failures`; views saved as CSV.
+- The whole benchmark is supported end to end: 55 calculators, 1,100 test examples. `Example` keeps non-numeric
+  answers; E2E reads and scores dates (`MM/DD/YYYY` and other formats) and gestational ages (weeks and days), with an
+  answer format adapted to each question (`{answer_format}` placeholder).
+- `ProbeSuite` builds the step probes (E, K, S, A) only for the 33 equation-based calculators and E2E for every
+  example. New `probes.STEP_PROBES`, `generation.model_name`.
+
+Dynamic splits:
+- `MedCalcDataset.split_off(name, fraction=/n=, from_split=, exclude_leaks=)` (stratified by calculator,
+  reproducible), `folds(k)`, `assign_split(ids, name)`, `with_splits(mapping or CSV)`, `save_splits(path)`,
+  `splits()`; `filter` takes lists, `note_type` and `where=` (any condition on the DataFrame).
+- `data.concat` / `ds1 + ds2` and `data.from_records` (your own examples); `data.demo(n_per_calculator)`.
+- Leakage checks work for any pair of splits: `data.leak_flags`, `data.leaking_rows`; `flag_train_rows` and
+  `usable_train_pool` take `train=` and `test=`. `evaluate_model(split=...)` takes custom or several splits, with
+  K test points from train examples that do not leak into them.
+- The dataset's repr shows its splits: `MedCalcDataset(11638 examples, 55 calculators; train: 10538, test: 1100)`.
+
+Prompts:
+- Three wordings of every prompt (`TEMPLATES` in each probe module, `knowledge.PATIENT_TEMPLATES`): "v1" (the
+  default, unchanged) and two paraphrases with the same information and answer format; `template="v2"` selects one.
+- Items record `template` (name) and `template_hash`; scores have a `template` column.
+- `evaluate_model(prompt_variants=3)` and `EvaluationReport.prompt_sensitivity` (accuracy per step and wording, mean,
+  sd, range); `EvaluationReport.consistency` (E2E accuracy when every step succeeds / when a step fails).
+- Unusable answers (empty, truncated, looping) have their category as `error_type`.
+- User guide: section "Prompt design and robustness".
+
 ## 0.3.1 — unreleased
 - README links point to the GitHub repository (relative links are broken on PyPI); project URLs in the
   package metadata.

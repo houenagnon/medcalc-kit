@@ -26,7 +26,7 @@ from typing import Any
 from medcalc_kit.data import Example, as_example
 from medcalc_kit.parsing import extract_json, to_number
 from medcalc_kit.probes.base import Probe
-from medcalc_kit.probes.common import DEFAULT_SYSTEM_PROMPT, Item, make_item, rel_close, render
+from medcalc_kit.probes.common import DEFAULT_SYSTEM_PROMPT, Item, make_item, rel_close, render, resolve_template
 from medcalc_kit.units import (
     UnitError,
     clean_unit,
@@ -48,6 +48,24 @@ DEFAULT_TEMPLATE = (
     "Fields:\n{fields}\n\n"
     "You may think briefly, then end your answer with a single JSON object containing exactly these fields."
 )
+
+# Paraphrases of the default template: the same information, conventions and answer format, worded differently, to
+# measure how much a result depends on the wording (see evaluate_model(prompt_variants=...)). "v1" is the default.
+TEMPLATES = {
+    "v1": DEFAULT_TEMPLATE,
+    "v2": ("Read the clinical note below and find the values of the listed fields for this patient.\n\n"
+           "Note:\n{note}\n\n"
+           "Fields to report:\n{fields}\n\n"
+           "Rules: take the values recorded at the patient's first admission, before any treatment; copy each "
+           "number with the unit used in the note, without converting it; write null for a field the note does not "
+           "mention.\n\n"
+           "After any reasoning, finish with a single JSON object whose keys are exactly the fields above."),
+    "v3": ("{note}\n\n"
+           "From this patient note, extract:\n{fields}\n\n"
+           "Use the values at first admission, before treatment. Keep each number with its unit as written in the "
+           "note (no conversion); use null when a value is not mentioned. End with a single JSON object with "
+           "exactly these fields."),
+}
 
 # Entity fields whose information is given by the question, not by the patient note.
 NOT_IN_NOTE = {"target steroid"}
@@ -122,7 +140,8 @@ def build(example: Example | dict[str, Any], fields: dict[str, str] | None = Non
     For MME (calculator 49) the drug fields are always taken from the example itself.
 
     kind_hints: answer format per field kind (overrides KIND_HINT); field_hints: answer format for specific
-    field names (overrides the kind's format). template: prompt text, placeholders {note} and {fields};
+    field names (overrides the kind's format). template: prompt text with placeholders {note} and {fields}, or the
+    name of a variant of TEMPLATES ("v1", "v2", "v3");
     max_new_tokens: token budget; system_prompt: None for none; label: the item's probe label (default "E").
 
     >>> item = build(mk.data.demo()[1], field_hints={"height": "height in cm, a number"})
@@ -148,8 +167,10 @@ def build(example: Example | dict[str, Any], fields: dict[str, str] | None = Non
     hints = {**KIND_HINT, **(kind_hints or {})}
     lines = "\n".join(f'- "{k}": {(field_hints or {}).get(k) or default_field_hint(k, kind, hints)}'
                       for k, kind in fields.items())
-    user = render(template, note=ex.note, fields=lines)
-    return make_item(ex, label, user, {"fields": fields, "gold": gold}, max_new_tokens, system_prompt, task="E")
+    name, text = resolve_template(template, TEMPLATES)
+    user = render(text, note=ex.note, fields=lines)
+    return make_item(ex, label, user, {"fields": fields, "gold": gold}, max_new_tokens, system_prompt, task="E",
+                     template=(name, text))
 
 
 # ---------------------------------------------------------------- score

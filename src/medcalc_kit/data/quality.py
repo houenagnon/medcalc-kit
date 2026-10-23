@@ -17,6 +17,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from collections.abc import Iterable
 from typing import Any
 
 import pandas as pd
@@ -90,30 +91,58 @@ def _frame(data) -> pd.DataFrame:
     return data.df if hasattr(data, "df") else data
 
 
-def flag_train_rows(data) -> pd.DataFrame:
-    """Train rows (DataFrame) with columns leak_text, leak_patient, registry_ok, plausible.
-    `data`: a MedCalcDataset or a DataFrame containing both the train and test splits.
+def _names(split: str | Iterable[str]) -> list[str]:
+    return [split] if isinstance(split, str) else list(split)
+
+
+def leak_flags(data, split: str = "train", against: str | Iterable[str] = "test") -> pd.DataFrame:
+    """For the rows of `split`: `leak_text` (the same note, up to case and spacing, appears in `against`) and
+    `leak_patient` (an "Extracted" note of a patient whose extracted note is in `against`). Indexed like the rows.
+
+    >>> ds = mk.data.demo(2).assign_split(["demo:2:1"], "test")
+    >>> leak_flags(ds, split="demo").sum().to_dict()           # demo notes are all different
+    {'leak_text': 0, 'leak_patient': 0}
+    """
+    df = _frame(data)
+    rows = df[df["split"] == split]
+    ref = df[df["split"].isin(_names(against))]
+    hashes = set(ref["Patient Note"].map(note_hash))
+    extracted = set(ref.loc[ref["Note Type"] == "Extracted", "Note ID"])
+    return pd.DataFrame({"leak_text": rows["Patient Note"].map(note_hash).isin(hashes),
+                         "leak_patient": (rows["Note Type"] == "Extracted") & rows["Note ID"].isin(extracted)},
+                        index=rows.index)
+
+
+def leaking_rows(data, split: str = "train", against: str | Iterable[str] = "test") -> pd.Series:
+    """Boolean Series over the rows of `split`: True if the row leaks into `against` (see leak_flags)."""
+    flags = leak_flags(data, split, against)
+    return flags.leak_text | flags.leak_patient
+
+
+def flag_train_rows(data, train: str = "train", test: str | Iterable[str] = "test") -> pd.DataFrame:
+    """Rows of split `train` (DataFrame) with columns leak_text, leak_patient (with respect to the split(s) `test`),
+    registry_ok, plausible. `data`: a MedCalcDataset or a DataFrame containing both splits.
 
     >>> flags = flag_train_rows(data.load(equation_only=True))    # doctest: +SKIP
     >>> flags[["leak_text", "leak_patient", "registry_ok", "plausible"]].mean()   # doctest: +SKIP
     """
-    df = _frame(data).copy()
-    df["note_hash"] = df["Patient Note"].map(note_hash)
-    test = df[df["split"] == "test"]
-    train = df[df["split"] == "train"].copy()
-    test_pmc_ids = set(test.loc[test["Note Type"] == "Extracted", "Note ID"])
-    train["leak_text"] = train["note_hash"].isin(set(test["note_hash"]))
-    train["leak_patient"] = (train["Note Type"] == "Extracted") & train["Note ID"].isin(test_pmc_ids)
-    train["registry_ok"] = train.apply(registry_agrees, axis=1)
-    train["plausible"] = train.apply(_plausible, axis=1)
-    return train
+    df = _frame(data)
+    rows = df[df["split"] == train].copy()
+    rows["note_hash"] = rows["Patient Note"].map(note_hash)
+    rows = rows.join(leak_flags(df, train, test))
+    rows["registry_ok"] = rows.apply(registry_agrees, axis=1) if len(rows) else pd.Series(dtype=bool)
+    rows["plausible"] = rows.apply(_plausible, axis=1) if len(rows) else pd.Series(dtype=bool)
+    return rows
 
 
-def usable_train_pool(data) -> pd.DataFrame:
-    """Train rows that are leakage-free, reproduced by the registry and plausible: a clean pool of other patients,
-    e.g. for K test points (ProbeSuite(k_pool=...)).
+def usable_train_pool(data, train: str = "train", test: str | Iterable[str] = "test") -> pd.DataFrame:
+    """Rows of split `train` that are leakage-free with respect to `test`, reproduced by the registry and
+    plausible: a clean pool of other patients, e.g. for K test points (ProbeSuite(k_pool=...)). With custom splits,
+    pass every split you evaluate as `test`, e.g. test=["dev", "test"].
 
     >>> pool = usable_train_pool(data.load(equation_only=True))   # doctest: +SKIP
     """
-    t = flag_train_rows(data)
+    t = flag_train_rows(data, train, test)
+    if t.empty:
+        return t
     return t[~t["leak_text"] & ~t["leak_patient"] & t["registry_ok"] & t["plausible"]]

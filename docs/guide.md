@@ -1,19 +1,22 @@
 # User guide
 
 This guide explains how medcalc-kit works and how to use it. Function signatures and examples are in the
-[API reference](api.md), the expected inputs of each calculator are in the [calculator list](calculators.md), and
-[`examples/tutorial.ipynb`](../examples/tutorial.ipynb) runs everything end to end.
+[API reference](api.md), the expected inputs of each calculator are in the [calculator list](calculators.md).
+[`examples/evaluate_model.ipynb`](../examples/evaluate_model.ipynb) evaluates a model in one call, and
+[`examples/tutorial.ipynb`](../examples/tutorial.ipynb) walks through every building block.
 
 - [1. The idea](#1-the-idea)
-- [2. A whole evaluation in five steps](#2-a-whole-evaluation-in-five-steps)
-- [3. The objects you handle](#3-the-objects-you-handle)
-- [4. The five probes](#4-the-five-probes)
-- [5. Generation artifacts](#5-generation-artifacts)
-- [6. Using your own model](#6-using-your-own-model)
-- [7. Comparing models and conditions](#7-comparing-models-and-conditions)
-- [8. Customising prompts and scoring](#8-customising-prompts-and-scoring)
-- [9. Good practices](#9-good-practices)
-- [10. Troubleshooting](#10-troubleshooting)
+- [2. Evaluating a model](#2-evaluating-a-model)
+- [3. Working with the benchmark and splits](#3-working-with-the-benchmark-and-splits)
+- [4. The objects you handle](#4-the-objects-you-handle)
+- [5. The five probes](#5-the-five-probes)
+- [6. Generation artifacts](#6-generation-artifacts)
+- [7. Using your own model](#7-using-your-own-model)
+- [8. Comparing models and conditions](#8-comparing-models-and-conditions)
+- [9. Customising prompts and scoring](#9-customising-prompts-and-scoring)
+- [10. Prompt design and robustness](#10-prompt-design-and-robustness)
+- [11. Good practices](#11-good-practices)
+- [12. Troubleshooting](#12-troubleshooting)
 
 ## 1. The idea
 
@@ -32,13 +35,69 @@ Each probe isolates one competence: the model receives everything the other step
 by the **calculator registry**, an executable implementation of the 33 equation-based calculators that reproduces
 all 660 test answers of MedCalc-Bench-Verified. Scoring is deterministic and never runs model output as code.
 
-## 2. A whole evaluation in five steps
+So the kit evaluates a model at two levels:
+
+- **general**: the original task (E2E) on the whole benchmark, 55 calculators and 1,100 test examples (equations,
+  rule-based scores such as CHA2DS2-VASc, and dates), comparable with published MedCalc-Bench results;
+- **step by step**: E, K, S and A on the 33 equation-based calculators (660 test examples), the only ones whose
+  calculation can be split into steps, with E2E on the same examples to see where the chain breaks.
+
+## 2. Evaluating a model
+
+### In one call
+
+```python
+import medcalc_kit as mk
+from medcalc_kit.generation.hf import HFBackend                    # pip install "medcalc-kit[hf]"
+
+model = HFBackend("Qwen/Qwen2.5-7B-Instruct", device="cuda:0")      # or any function messages -> text
+report = mk.evaluate_model(model, batch_size=16)
+report
+```
+
+```text
+MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
+  general (end to end): 41.2% of 1100 examples (55 calculators)
+  step by step (660 examples of equation-based calculators):
+    E    extraction         85.0%
+    K    formula knowledge  20.1%
+    ...
+```
+
+(Illustrative numbers.) The report's views are DataFrames:
+
+| view | content |
+|---|---|
+| `report.general` | E2E accuracy per category (lab test, physical, dosage, risk, severity, diagnosis, date) and `all` |
+| `report.steps` | per step (E, K, S, A, E2E on the same examples): `n`, `well_formed`, `competence`, `accuracy` |
+| `report.by_calculator` | accuracy per calculator and step |
+| `report.examples` | one row per example: correct at each step, and `first_failure`, the first step that fails |
+| `report.first_failures` | how often each step is the first to fail, and the E2E accuracy in each case |
+| `report.consistency` | E2E accuracy when every step succeeds and when a step fails |
+| `report.prompt_sensitivity` | with `prompt_variants=3`: accuracy per step and wording, mean, sd, range ([section 10](#10-prompt-design-and-robustness)) |
+| `report.scores`, `report.items` | every answer (text, verdict) and every prompt, for your own analyses |
+
+Everything is saved in `output_dir` (default `medcalc_eval/<model id>/`): the items, `generations.jsonl` (written
+as the model answers) and the views as CSV. Running the same call again resumes an interrupted run;
+`mk.evaluate_model(None, output_dir, model_id=...)` rescores saved generations without a model.
+
+Useful options: `prompt_variants=3` to measure the sensitivity to the wording, `per_calculator=5` to try a model
+quickly on 5 examples per calculator, `steps=()` for the general
+score only, `k_mode="general"` for K without the patient's values, `probe_options={"E2E": {"max_new_tokens": 4096}}`
+for a reasoning model, `dataset=` and `split=` to evaluate other examples.
+
+To compare models, evaluate each and concatenate their scores: see [section 8](#8-comparing-models-and-conditions).
+
+### Step by step, with the building blocks
+
+`evaluate_model` chains five functions that can be used on their own, e.g. to change the examples, the probes or
+the prompts:
 
 ```python
 import medcalc_kit as mk
 
 # 1. Data: MedCalc-Bench-Verified at a pinned revision (downloaded once, then cached)
-ds = mk.load(equation_only=True)                 # or mk.data.demo() to try things offline
+ds = mk.load()                                   # all 55 calculators (or mk.data.demo() offline)
 test = ds.filter(split="test")
 
 # 2. Items: one prompt per (example, probe), with everything needed to score the answer
@@ -55,10 +114,70 @@ scores = mk.score_records("outputs/qwen.jsonl", items, condition={"model": "qwen
 mk.summary(scores)
 ```
 
-`model` can be a Hugging Face model (`mk.generation.hf.HFBackend`), any object with a `generate_batch` method, or a
-plain function; see [section 6](#6-using-your-own-model).
+`model` can be a Hugging Face model (`mk.generation.hf.HFBackend`), any object with a `generate_batch` or
+`generate` method, or a plain function; see [section 7](#7-using-your-own-model). `ProbeSuite` builds E2E for every
+example and the step probes only for the 33 equation-based calculators.
 
-## 3. The objects you handle
+## 3. Working with the benchmark and splits
+
+`mk.load()` returns a `MedCalcDataset`: the benchmark as a DataFrame (`ds.df`, original columns plus `entities`,
+`split` and `example_id`) with methods that each return a new dataset. Nothing is modified in place.
+
+```python
+ds = mk.load()                                   # 55 calculators, splits "train" and "test"
+ds                                               # MedCalcDataset(11638 examples, 55 calculators; train: 10538, test: 1100)
+ds.splits()                                      # examples and calculators per split
+ds.calculators()                                 # examples per calculator and split
+```
+
+**Selecting.** Every criterion of `filter` takes one value or a list; `where` takes any condition on the DataFrame.
+
+```python
+ds.filter(split="test", category=["lab test", "physical"])
+ds.filter(calculator=[2, 3, 9], note_type="Extracted")
+ds.filter(where=lambda df: df["Patient Note"].str.len() < 2000)
+ds.select(["test:2:1", "test:2:2"])              # given examples, in this order
+ds.sample(5, per_calculator=True, seed=0)        # a quick, stratified subset
+ds.equation_only()                               # the 33 equation-based calculators
+```
+
+**Making splits.** The `split` column is free: create any split, at any time.
+
+```python
+# a dev set: 10 % of each calculator's training examples, never leaking into the test set
+ds = ds.split_off("dev", fraction=0.1, exclude_leaks=True)          # or n=20 per calculator
+# k-fold cross-validation over train: 5 datasets, the i-th with fold i in "dev"
+for fold in ds.folds(5):
+    ...
+# your own split from example ids (e.g. hard cases you selected)
+ds = ds.assign_split(hard_ids, "hard")
+```
+
+`split_off` and `folds` are stratified by calculator and reproducible (`seed`). With `exclude_leaks=True`, an
+example whose note also appears in the test set (or an extracted note of a test patient) is never moved.
+
+**Saving and restoring a split.** A split is a mapping `example_id -> split`; save it to reuse it later or share it:
+
+```python
+ds.save_splits("splits/dev10.csv")
+ds = mk.load().with_splits("splits/dev10.csv")   # the same split, on a fresh copy of the benchmark
+ds.with_splits({"test:2:1": "hard"})             # or a dict / DataFrame / Series; drop_unassigned=True keeps only those
+```
+
+**Adding your own examples.** Build a dataset from records with the benchmark's column names, and concatenate:
+
+```python
+mine = mk.data.from_records([{"Calculator ID": 6, "Patient Note": "...", "Question": "...",
+                              "entities": {"weight": [80, "kg"], "height": [180, "cm"]},
+                              "Ground Truth Answer": 24.69}], split="mine")
+ds = ds + mine                                   # or mk.data.concat(ds, mine, ...)
+```
+
+**Evaluating on any split.** `evaluate_model(model, dataset=ds, split="dev")` (or `split=["dev", "test"]`). The K test
+points are taken from "train" examples that do not leak into the evaluated splits; for other uses,
+`mk.data.usable_train_pool(ds, test=["dev", "test"])` gives the same pool.
+
+## 4. The objects you handle
 
 ### Example
 
@@ -106,14 +225,14 @@ correct), plus details that depend on the probe (see below).
 
 `mk.score_records(records, items)` returns one row per answer: the `condition` columns you passed, `item_id`,
 `example_id`, `calculator_id`, `probe`, `task`, `prompt_key`, `category` (see
-[section 5](#5-generation-artifacts)), `well_formed`, `correct`, `error_type`, `n_new_tokens`, `seconds`; with
+[section 6](#6-generation-artifacts)), `well_formed`, `correct`, `error_type`, `n_new_tokens`, `seconds`; with
 `details=True`, also the answer `text` and the full `verdict`.
 
 `mk.summary(scores)` returns per group: `n_units`, `well_formed` (share of well-formed answers), `competence`
 (accuracy among well-formed answers) and `overall` (accuracy over all answers). Only well-formed answers can be
 correct, so `overall = well_formed × competence`.
 
-## 4. The five probes
+## 5. The five probes
 
 | probe | the model ends with | reference | verdict details | error types |
 |---|---|---|---|---|
@@ -121,7 +240,7 @@ correct, so `overall = well_formed × competence`.
 | K | `{"cases": [{"condition": …, "formula": …}]}` (patient mode: `{"formula": …}`) | `entities`, `symbols`, `answer`, `point_entities` | `point_pass_rate`, `original_point_correct`, `n_points`, `points` (with `details=True`) | `format_invalid`, `unparsable_formula`, `unknown_variable`, `wrong_at_patient_point`, `wrong_elsewhere` |
 | S | `{"expression": …}` | `formula`, `values`, `gold_expression`, `gold_value` | `value_matches`, `missing_variables`, `match` | `format_invalid`, `unparsable_expression`, `unsubstituted_variable`, `premature_computation`, `missing_or_wrong_value`, `accidental_value_match`, `structure_or_assignment_error`, `too_ambiguous` |
 | A | `{"result": …}` | `expression`, `gold_value` | `rel_error`, `correct_strict` | `format_invalid`, `arithmetic_error` |
-| E2E | `{"answer": …}` | `ground_truth`, `lower`, `upper` | `rel_error` | `format_invalid`, `out_of_bounds` |
+| E2E | `{"answer": …}`: a number, `"MM/DD/YYYY"` or `{"weeks": …, "days": …}` | `ground_truth`, `lower`, `upper`, `answer_type` | `rel_error` (numbers), `error_days` (dates) | `format_invalid`, `out_of_bounds`, `wrong_date`, `wrong_duration` |
 
 How each probe decides:
 
@@ -137,11 +256,13 @@ How each probe decides:
   after mapping the numbers back to variables. A partly computed answer is *not* a substitution, even if its value
   is right (`premature_computation`).
 - **A**: relative error ≤ 1 % (`correct`) and ≤ 0.1 % (`correct_strict`).
-- **E2E**: the answer must fall within the benchmark's interval.
+- **E2E**: a number must fall within the benchmark's interval (the exact value for rule-based scores); a date or a
+  gestational age (weeks and days) must be exactly right. Dates are read in the usual formats (`06/16/2012`,
+  `2012-06-16`, `June 16, 2012`).
 
 Every probe reads the **last** JSON object of the answer, so the model may reason before it.
 
-## 5. Generation artifacts
+## 6. Generation artifacts
 
 Before scoring, each answer is classified, in this order:
 
@@ -156,7 +277,7 @@ Before scoring, each answer is classified, in this order:
 Small or compressed models often fail by producing artifacts rather than wrong answers; `well_formed` and
 `competence` separate the two. Thresholds are options of `score_records(artifacts=...)`.
 
-## 6. Using your own model
+## 7. Using your own model
 
 `run_items(items, out_path, model)` accepts:
 
@@ -190,7 +311,7 @@ answers = pd.DataFrame({"item_id": items.item_id, "text": my_texts})
 mk.score_records(answers, items)
 ```
 
-## 7. Comparing models and conditions
+## 8. Comparing models and conditions
 
 Add constant columns with `condition` and group by them:
 
@@ -206,7 +327,7 @@ mk.summary(scores, by=("model", "calculator_id"))
 Examples are identified by `example_id` in every table, so paired comparisons (same example, two conditions) are a
 pivot away: `scores.pivot_table(index="item_id", columns="model", values="correct")`.
 
-## 8. Customising prompts and scoring
+## 9. Customising prompts and scoring
 
 Every setting is an argument with a documented default (`DEFAULT_*` constants in each probe module).
 
@@ -233,8 +354,70 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 | E2E | `template`, `max_new_tokens`, `system_prompt` | `rel_tol` (instead of the benchmark interval) |
 
 All builders also take `label`. The placeholders of each template are listed next to its `DEFAULT_TEMPLATE`.
+`template` is either a text or the name of one of the module's wordings (`"v1"`, `"v2"`, `"v3"`, see
+[section 10](#10-prompt-design-and-robustness)): `ProbeSuite({"A": {}, "A@v2": {"task": "A", "template": "v2"}})`.
 
-## 9. Good practices
+## 10. Prompt design and robustness
+
+A step probe is only valid if its prompt neither gives away the competence it measures (too much guidance) nor
+makes the model guess conventions or formats that have nothing to do with it (too little). The prompts of the kit
+follow these rules; keep them if you write your own.
+
+**Guide the interface, never the competence.** Each prompt gives what is needed to answer and to be scored
+automatically, and nothing of the competence measured:
+
+| probe | given (interface) | never given (the competence) |
+|---|---|---|
+| E | the list of fields, the JSON format, "the unit as written" | the values, unit conversions |
+| K | the variables and their units, the conventions stated in the benchmark question | the formula, the thresholds of the branches, the coefficients |
+| S | the exact formula of the patient's branch, the values | the result, intermediate computations |
+| A | the fully substituted expression | the result; no tool |
+| E2E | the note and the question, as in the benchmark | nothing more |
+
+K gives the list of variables, which automatic scoring needs; it helps a little (the model knows which quantities
+enter the formula) and should be stated as a limitation.
+
+**Oracle inputs.** Each step receives the reference output of the steps before it (S gets the reference formula, A
+the reference expression), so an error upstream never propagates: each competence is measured on its own.
+
+**Same protocol for every probe and every model.** Free reasoning, then a final JSON object; greedy decoding, the
+model's chat template, fixed token budgets. Format failures are counted apart (`well_formed` vs `competence`), so
+they are not mistaken for reasoning errors.
+
+**Fix the prompts before looking at the results**, and report them verbatim. Each item records the name of its
+template (`template`) and a hash of its text (`template_hash`), so a paper can cite exactly what was asked. To
+iterate on prompts, use a dev split (`ds.split_off("dev", fraction=0.1, exclude_leaks=True)`), never the test set.
+
+**Measure the sensitivity to the wording.** Every probe has three wordings (`TEMPLATES` in each probe module, and
+`knowledge.PATIENT_TEMPLATES`): "v1" (the default) and two paraphrases with the same information, conventions and
+answer format. A test checks that the three use the same placeholders and that reference answers are scored correct
+with each of them, on the whole benchmark.
+
+```python
+report = mk.evaluate_model(model, prompt_variants=3)      # 3 wordings of every prompt (3x the generations)
+report.prompt_sensitivity                                  # accuracy per step and wording, mean, sd, range
+```
+
+The views (`general`, `steps`...) use "v1"; `prompt_sensitivity` compares the wordings. Report the range next to
+each score: a difference between two models that is smaller than the range is not robust. To compare models,
+check that their ranking is the same with each wording.
+
+**Treat the amount of guidance as a variable** rather than an arbitrary choice: K in `patient` mode (the model sees
+the values and writes the formula of the patient's branch) versus `general` mode (no values, every branch) is such a
+contrast, and the difference is a result in itself.
+
+**Validate the probes.**
+
+- Positive control: `mk.reference_answer(item)` must be scored correct for every item (tested on the 1,100 test
+  examples, for every wording).
+- Negative controls: known wrong answers must be rejected (tested per error type in `tests/`).
+- Human audit: read a sample of failures per probe (`report.scores` has the text and the verdict) to check that each
+  failure is real, not a parsing problem.
+- Consistency of the decomposition: `report.consistency` gives the end-to-end accuracy when every step succeeds and
+  when a step fails. If the first is low, the steps do not represent the task faithfully; if the second is high,
+  the model reaches the answer by another route (or by chance).
+
+## 11. Good practices
 
 - **Pin the dataset revision.** `mk.load()` uses `data.DEFAULT_REVISION`, the version the registry was verified
   against. Pass `revision=` explicitly in papers and record it.
@@ -249,12 +432,12 @@ All builders also take `label`. The placeholders of each template are listed nex
 - **Check your pipeline without a model**: score `mk.reference_answer(item)` for every item; everything should be
   correct (this is part of the test suite on the full test split).
 
-## 10. Troubleshooting
+## 12. Troubleshooting
 
 | symptom | cause and fix |
 |---|---|
 | `KeyError: "calculator 6 (...) needs the entity 'height'"` | the entities miss an input; [calculators.md](calculators.md) lists the expected names |
-| `KeyError: "unknown calculator '1'"` | only the 33 equation-based calculators are implemented: load with `equation_only=True` |
+| `KeyError: "unknown calculator '1'"` | the registry (`derive`, step probes) covers the 33 equation-based calculators; E2E covers all 55 |
 | every answer is `truncated` | `max_new_tokens` too small for a reasoning model: raise it in the suite options |
 | every answer is `format_invalid` | the model does not end with the JSON object; look at `score_records(..., details=True).text` and adapt the template |
 | K is `wrong_elsewhere` | right formula for this patient but wrong branch or constant elsewhere; `mk.score(item, text, details=True)["points"]` shows each test point |

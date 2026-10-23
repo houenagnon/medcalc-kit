@@ -11,6 +11,7 @@ braces, is kept as is. Each probe documents its placeholders next to its DEFAULT
 """
 from __future__ import annotations
 
+import hashlib
 import math
 import re
 from collections.abc import Iterable, Mapping
@@ -57,6 +58,31 @@ def render(template: str, **fields: Any) -> str:
     'Compute 1 + 1, reply {"result": <number>} {unknown}'
     """
     return re.sub(r"\{(\w+)\}", lambda m: str(fields[m.group(1)]) if m.group(1) in fields else m.group(0), template)
+
+
+def template_hash(template: str) -> str:
+    """Short hash of a template text, recorded in each item so that the exact prompt can be cited.
+
+    >>> template_hash("Compute {expression}.")
+    '6366847ca0'
+    """
+    return hashlib.sha1(template.encode()).hexdigest()[:10]
+
+
+def resolve_template(template: str | None, templates: dict[str, str]) -> tuple[str, str]:
+    """(name, text) of a template given by variant name ("v2"), by text, or None (the first variant). A text that
+    is not one of the variants is named "custom".
+
+    >>> resolve_template("v2", {"v1": "A {x}", "v2": "B {x}"}), resolve_template("C {x}", {"v1": "A {x}"})
+    (('v2', 'B {x}'), ('custom', 'C {x}'))
+    """
+    if template is None:
+        name = next(iter(templates))
+        return name, templates[name]
+    if template in templates:
+        return template, templates[template]
+    name = next((k for k, v in templates.items() if v == template), "custom")
+    return name, template
 
 
 def fmt(v: float, digits: int = DEFAULT_DIGITS) -> str:
@@ -170,9 +196,11 @@ def categorical_context(entities: dict[str, Any]) -> list[str]:
 
 
 def make_item(example: Example, probe: str, user: str, reference: dict[str, Any], max_new_tokens: int,
-              system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, task: str | None = None) -> Item:
+              system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, task: str | None = None,
+              template: tuple[str, str] | None = None) -> Item:
     """Assemble an item (used by every probe's build). task: the probe that scores this item when `probe` is a
-    custom label (e.g. two K variants "K", "Kg").
+    custom label (e.g. two K variants "K", "Kg"). template: (name, text) of the template used, recorded as
+    `template` (its name) and `template_hash`.
 
     >>> item = make_item(mk.data.demo()[1], "A", "Compute 1 + 1", {"gold_value": 2.0}, 64, system_prompt=None)
     >>> item["item_id"], item["messages"]
@@ -189,13 +217,15 @@ def make_item(example: Example, probe: str, user: str, reference: dict[str, Any]
         "max_new_tokens": max_new_tokens,
         "reference": reference,
     }
+    if template is not None:
+        item["template"], item["template_hash"] = template[0], template_hash(template[1])
     if task and task != probe:
         item["task"] = task
     return item
 
 
-ITEM_COLUMNS = ("item_id", "probe", "task", "example_id", "calculator_id", "calculator_name", "max_new_tokens",
-                "messages", "reference")
+ITEM_COLUMNS = ("item_id", "probe", "task", "example_id", "calculator_id", "calculator_name", "template",
+                "template_hash", "max_new_tokens", "messages", "reference")
 
 
 def _drop_missing(row: dict[str, Any]) -> dict[str, Any]:

@@ -97,6 +97,16 @@ def _ensure_trailing_newline(path: Path) -> None:
                 f.write("\n")
 
 
+def model_name(model: Any) -> str:
+    """The id recorded for a model: its `model_id` attribute, else its (function) name.
+
+    >>> def my_model(messages, max_new_tokens): ...
+    >>> model_name(my_model)
+    'my_model'
+    """
+    return getattr(model, "model_id", None) or getattr(model, "__name__", None) or type(model).__name__
+
+
 def _as_triple(out: str | tuple[str, int, int]) -> tuple[str, int, int]:
     return (out, 0, 0) if isinstance(out, str) else tuple(out)
 
@@ -145,8 +155,7 @@ def run_items(
             generate = getattr(model, "generate", model)
             generate_batch = lambda msgs, n: [generate(m, n) for m in msgs]  # noqa: E731
     if model_id is None:
-        model_id = getattr(model, "model_id", None) or getattr(model, "__name__", None) or \
-            getattr(generate_batch, "__name__", "model")
+        model_id = model_name(model if model is not None else generate_batch)
     items = as_items(items)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

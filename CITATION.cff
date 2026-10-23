@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use medcalc-kit, please cite it as below."
 title: "medcalc-kit: diagnostic probes for medical calculation with LLMs"
-version: 0.3.1
+version: 0.4.0
 license: MIT
 repository-code: "https://github.com/houenagnon/medcalc-kit"
 authors:

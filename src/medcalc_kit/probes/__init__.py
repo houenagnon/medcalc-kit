@@ -29,7 +29,7 @@ import pandas as pd
 from medcalc_kit.probes import arithmetic, end_to_end, extraction, knowledge, substitution
 from medcalc_kit.probes.base import Probe
 from medcalc_kit.probes.common import Item, as_item, as_items, items_frame, prompt
-from medcalc_kit.probes.suite import ALL_PROBES, ProbeSuite, read_items, write_items
+from medcalc_kit.probes.suite import ALL_PROBES, STEP_PROBES, ProbeSuite, read_items, write_items
 
 PROBES: dict[str, Probe] = {m.PROBE.name: m.PROBE for m in (extraction, knowledge, substitution, arithmetic,
                                                             end_to_end)}
@@ -92,6 +92,6 @@ def reference_answer(item: Item | pd.Series) -> str:
     return get(_task(item)).reference_answer(item)
 
 
-__all__ = ["ALL_PROBES", "PROBES", "Item", "Probe", "ProbeSuite", "arithmetic", "as_item", "as_items", "end_to_end",
-           "extraction", "get", "items_frame", "knowledge", "prompt", "read_items", "reference_answer", "score",
-           "substitution", "write_items"]
+__all__ = ["ALL_PROBES", "PROBES", "STEP_PROBES", "Item", "Probe", "ProbeSuite", "arithmetic", "as_item", "as_items",
+           "end_to_end", "extraction", "get", "items_frame", "knowledge", "prompt", "read_items", "reference_answer",
+           "score", "substitution", "write_items"]

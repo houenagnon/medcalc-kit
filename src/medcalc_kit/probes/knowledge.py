@@ -49,6 +49,7 @@ from medcalc_kit.probes.common import (
     make_item,
     rel_close,
     render,
+    resolve_template,
     symbol_doc,
     task_question,
 )
@@ -95,6 +96,45 @@ DEFAULT_PATIENT_TEMPLATE = (
     '{"formula": "<expression>"}'
 )
 
+# Paraphrases of the default template: the same information, conventions and answer format, worded differently, to
+# measure how much a result depends on the wording (see evaluate_model(prompt_variants=...)). "v1" is the default.
+TEMPLATES = {
+    "v1": DEFAULT_TEMPLATE,
+    "v2": ("Question to answer: {question}\n\n"
+           "The patient's measurements are not provided. Using only the variables below (in the units given; put "
+           "any unit conversion inside the formula), write the general formula that answers this question.\n\n"
+           "Patient characteristics already known:\n{context}\n\n"
+           "Variables:\n{variables}\n\n"
+           "If the formula changes with thresholds or categories, write one case per branch with a condition on these "
+           "variables (for example \"x <= 0.9\") and use \"otherwise\" for the remaining case. " + _ALLOWED + "\n\n"
+           "After any reasoning, end with a JSON object of the form\n"
+           '{"cases": [{"condition": "<condition, or always>", "formula": "<expression>"}]}'),
+    "v3": ("{question}\n\n"
+           "Known about the patient:\n{context}\n\n"
+           "Available variables (units fixed as stated):\n{variables}\n\n"
+           "Without the patient's values, give the formula for this calculation in terms of these variables, unit "
+           "conversions included. For a piecewise formula, give each branch with its condition (like \"x <= 0.9\"), "
+           "the last one being \"otherwise\". " + _ALLOWED + "\n\n"
+           'End with {"cases": [{"condition": "<condition, or always>", "formula": "<expression>"}]}'),
+}
+PATIENT_TEMPLATES = {
+    "v1": DEFAULT_PATIENT_TEMPLATE,
+    "v2": ("Question to answer: {question}\n\n"
+           "Patient characteristics:\n{context}\n\n"
+           "Patient values:\n{values}\n\n"
+           "Give the formula that applies to THIS patient, written with the variable names below rather than the "
+           "patient's numbers: do NOT compute the result. Units are fixed as stated; include any unit conversion in "
+           "the formula.\n\n"
+           "Variables:\n{variables}\n\n" + _ALLOWED + "\n\n"
+           "After any reasoning, end with a JSON object of the form\n"
+           '{"formula": "<expression>"}'),
+    "v3": ("{question}\n\n"
+           "Patient characteristics:\n{context}\nPatient values:\n{values}\n\n"
+           "Write the formula used for this patient as an expression of these variables (units fixed as stated, "
+           "conversions inside the formula), not as a computed number:\n{variables}\n\n" + _ALLOWED + "\n\n"
+           'End with {"formula": "<expression>"}'),
+}
+
 
 def with_categorical(point: dict[str, Any], entities: dict[str, Any]) -> dict[str, Any]:
     """Continuous values from `point`, categorical (str/bool) fields from `entities`.
@@ -132,7 +172,8 @@ def build(example: Example | dict[str, Any], point_pool: list[dict[str, Any]] | 
     so that thresholds are explored realistically (in "patient" mode, only those in the patient's branch are
     kept; pass a large pool). Without a pool, perturbations of the patient are used at scoring time.
     mode: "general" (no values shown, one case per branch) or "patient" (values shown, this patient's formula).
-    template: defaults to DEFAULT_TEMPLATE ("general") or DEFAULT_PATIENT_TEMPLATE ("patient").
+    template: prompt text, or the name of a variant ("v1", "v2", "v3") of TEMPLATES ("general" mode) or
+    PATIENT_TEMPLATES ("patient" mode); default "v1" (DEFAULT_TEMPLATE / DEFAULT_PATIENT_TEMPLATE).
     n_points: test points kept from the pool; symbol_docs: {variable: description} overriding
     common.SYMBOL_DOCS; digits: significant digits of the values shown in "patient" mode.
 
@@ -155,9 +196,8 @@ def build(example: Example | dict[str, Any], point_pool: list[dict[str, Any]] | 
         "variables": "\n".join(f"- {s}: {symbol_doc(s, entities, symbol_docs)}" for s in symbols),
         "values": "\n".join(f"- {s} = {fmt(v, digits)}" for s, v in d.inputs.items()),
     }
-    if template is None:
-        template = DEFAULT_TEMPLATE if mode == "general" else DEFAULT_PATIENT_TEMPLATE
-    user = render(template, **fields)
+    name, text = resolve_template(template, TEMPLATES if mode == "general" else PATIENT_TEMPLATES)
+    user = render(text, **fields)
     reference: dict[str, Any] = {"entities": entities, "symbols": symbols, "answer": d.answer}
     points = None
     if point_pool and ex.calculator_id not in PERTURB_ONLY:
@@ -168,7 +208,7 @@ def build(example: Example | dict[str, Any], point_pool: list[dict[str, Any]] | 
     reference["point_entities"] = points
     if mode == "patient":
         reference.update(mode="patient", branches=d.branches)
-    return make_item(ex, label, user, reference, max_new_tokens, system_prompt, task="K")
+    return make_item(ex, label, user, reference, max_new_tokens, system_prompt, task="K", template=(name, text))
 
 
 # ---------------------------------------------------------------- score

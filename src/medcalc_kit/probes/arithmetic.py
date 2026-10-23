@@ -28,6 +28,7 @@ from medcalc_kit.probes.common import (
     make_item,
     numeric_answer,
     render,
+    resolve_template,
 )
 
 DEFAULT_MAX_NEW_TOKENS = 1024
@@ -41,6 +42,21 @@ DEFAULT_TEMPLATE = (
     "Work carefully without any tool. End your answer with a JSON object of the form "
     '{"result": <number with at least 4 significant digits>}'
 )
+# Paraphrases of the default template: the same information, conventions and answer format, worded differently, to
+# measure how much a result depends on the wording (see evaluate_model(prompt_variants=...)). "v1" is the default.
+TEMPLATES = {
+    "v1": DEFAULT_TEMPLATE,
+    "v2": ("Calculate the following expression without using any tool:\n\n"
+           "{expression}\n\n"
+           "Notation: ^ is exponentiation, ln the natural logarithm, log10 the base-10 logarithm, and round(x, n) "
+           "rounds x to n decimal places.\n\n"
+           'Show your work if you wish, then give the result as a JSON object {"result": <number with at least 4 '
+           'significant digits>}'),
+    "v3": ("Expression: {expression}\n"
+           "(^ = power, ln = natural log, log10 = base-10 log, round(x, n) = x rounded to n decimals)\n\n"
+           "What is its value? Compute it yourself, then end with "
+           '{"result": <number with at least 4 significant digits>}'),
+}
 
 
 def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE,
@@ -48,7 +64,8 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
           digits: int = DEFAULT_DIGITS, label: str = "A") -> Item:
     """The item for one example: compute this patient's formula with the values already substituted.
 
-    template: prompt text, placeholder {expression}; max_new_tokens: token budget; system_prompt: None for none;
+    template: prompt text with placeholder {expression}, or the name of a variant of TEMPLATES ("v1", "v2", "v3");
+    max_new_tokens: token budget; system_prompt: None for none;
     digits: significant digits of the patient values inside the expression; label: the item's probe name.
 
     >>> item = build(mk.data.demo()[2], template='Compute {expression}. Reply {"result": <number>}.',
@@ -61,9 +78,10 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
     ex = as_example(example)
     formula, values, _ = branch_formula(ex, digits)
     expression = expr.to_str(expr.substitute(formula, values))
-    user = render(template, expression=expression)
+    name, text = resolve_template(template, TEMPLATES)
+    user = render(text, expression=expression)
     return make_item(ex, label, user, {"expression": expression, "gold_value": expr.evaluate(expression)},
-                     max_new_tokens, system_prompt, task="A")
+                     max_new_tokens, system_prompt, task="A", template=(name, text))
 
 
 def score_answer(reference: dict[str, Any], text: str, *, rel_tol: float = DEFAULT_REL_TOL,

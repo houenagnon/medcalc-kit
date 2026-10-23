@@ -40,6 +40,7 @@ from medcalc_kit.probes.common import (
     make_item,
     rel_close,
     render,
+    resolve_template,
     symbol_doc,
 )
 
@@ -56,13 +57,28 @@ DEFAULT_TEMPLATE = (
     'End your answer with a JSON object of the form {"expression": "<formula with the values substituted>"}'
 )
 
+# Paraphrases of the default template: the same information, conventions and answer format, worded differently, to
+# measure how much a result depends on the wording (see evaluate_model(prompt_variants=...)). "v1" is the default.
+TEMPLATES = {
+    "v1": DEFAULT_TEMPLATE,
+    "v2": ("Here is the formula used for {calculator_name}:\n\n{target} = {formula}\n\n"
+           "and the values of its variables:\n{values}\n\n"
+           "Rewrite the formula with each variable replaced by its value. Keep every operation, constant and "
+           "parenthesis as it is: do not calculate, round or simplify anything.\n\n"
+           'Finish with a JSON object {"expression": "<formula with the values substituted>"}'),
+    "v3": ("{calculator_name}\nFormula: {target} = {formula}\nValues:\n{values}\n\n"
+           "Plug the values into the formula without evaluating it (no arithmetic, no simplification). "
+           'End with {"expression": "<formula with the values substituted>"}'),
+}
+
 
 def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE,
           max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT,
           digits: int = DEFAULT_DIGITS, symbol_docs: dict[str, str] | None = None, label: str = "S") -> Item:
     """The item for one example: the formula of this patient's branch and the values, to be substituted.
 
-    template: prompt text, placeholders {calculator_name}, {target}, {formula}, {values}; max_new_tokens: token
+    template: prompt text with placeholders {calculator_name}, {target}, {formula}, {values}, or the name of a
+    variant of TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token
     budget; system_prompt: None for none; digits: significant digits of the values shown (the expected
     expression uses the same values); symbol_docs: {variable: description} overriding common.SYMBOL_DOCS;
     label: the item's probe name.
@@ -82,13 +98,14 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
     formula_str = expr.to_str(formula)
     val_lines = "\n".join(f"- {k} = {fmt(v, digits)}   ({symbol_doc(k, ex.entities, symbol_docs)})"
                           for k, v in values.items())
-    user = render(template, calculator_name=ex.calculator_name, target=d.steps[-1].name, formula=formula_str,
+    name, text = resolve_template(template, TEMPLATES)
+    user = render(text, calculator_name=ex.calculator_name, target=d.steps[-1].name, formula=formula_str,
                   values=val_lines)
     gold_expr = expr.to_str(expr.substitute(formula, values))
     return make_item(ex, label, user, {
         "formula": formula_str, "values": values, "gold_expression": gold_expr,
         "gold_value": expr.evaluate(gold_expr),
-    }, max_new_tokens, system_prompt, task="S")
+    }, max_new_tokens, system_prompt, task="S", template=(name, text))
 
 
 def _equivalent(a: expr.Node, b: expr.Node, symbols: dict[str, float], seed: int = 0,

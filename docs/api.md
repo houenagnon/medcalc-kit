@@ -1,23 +1,24 @@
 # API reference
 
-medcalc-kit 0.3.1. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
+medcalc-kit 0.4.0. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
 
 See also the [user guide](guide.md) and the [calculator list](calculators.md).
 
 - [`medcalc_kit` shortcuts](#medcalc_kit-shortcuts)
-- [`medcalc_kit.data`](#medcalc_kitdata): [`load`](#dataload), [`demo`](#datademo), [`MedCalcDataset`](#datamedcalcdataset), [`Example`](#dataexample), [`as_example`](#dataas_example), [`load_dataframe`](#dataload_dataframe), [`equation_subset`](#dataequation_subset), [`parse_entities`](#dataparse_entities), [`dataset_revision`](#datadataset_revision), [`DEFAULT_REVISION`](#datadefault_revision), [`EQUATION_CATEGORIES`](#dataequation_categories)
-- [`medcalc_kit.data.quality`](#medcalc_kitdataquality): [`usable_train_pool`](#dataqualityusable_train_pool), [`flag_train_rows`](#dataqualityflag_train_rows), [`registry_agrees`](#dataqualityregistry_agrees), [`implausible_inputs`](#dataqualityimplausible_inputs), [`note_hash`](#dataqualitynote_hash), [`PLAUSIBLE_RANGES`](#dataqualityplausible_ranges)
+- [`medcalc_kit.benchmark`](#medcalc_kitbenchmark): [`evaluate_model`](#benchmarkevaluate_model), [`EvaluationReport`](#benchmarkevaluationreport)
+- [`medcalc_kit.data`](#medcalc_kitdata): [`load`](#dataload), [`demo`](#datademo), [`MedCalcDataset`](#datamedcalcdataset), [`concat`](#dataconcat), [`from_records`](#datafrom_records), [`Example`](#dataexample), [`as_example`](#dataas_example), [`load_dataframe`](#dataload_dataframe), [`equation_subset`](#dataequation_subset), [`parse_entities`](#dataparse_entities), [`dataset_revision`](#datadataset_revision), [`DEFAULT_REVISION`](#datadefault_revision), [`EQUATION_CATEGORIES`](#dataequation_categories)
+- [`medcalc_kit.data.quality`](#medcalc_kitdataquality): [`usable_train_pool`](#dataqualityusable_train_pool), [`flag_train_rows`](#dataqualityflag_train_rows), [`leak_flags`](#dataqualityleak_flags), [`leaking_rows`](#dataqualityleaking_rows), [`registry_agrees`](#dataqualityregistry_agrees), [`implausible_inputs`](#dataqualityimplausible_inputs), [`note_hash`](#dataqualitynote_hash), [`PLAUSIBLE_RANGES`](#dataqualityplausible_ranges)
 - [`medcalc_kit.calculators`](#medcalc_kitcalculators): [`derive`](#calculatorsderive), [`table`](#calculatorstable), [`get`](#calculatorsget), [`list_calculators`](#calculatorslist_calculators), [`verify_registry`](#calculatorsverify_registry), [`Derivation`](#calculatorsderivation), [`Step`](#calculatorsstep), [`Calculator`](#calculatorscalculator), [`KNOWN_REFERENCE_DEVIATIONS`](#calculatorsknown_reference_deviations)
 - [`medcalc_kit.calculators.registry`](#medcalc_kitcalculatorsregistry): [`calculator`](#calculatorsregistrycalculator), [`new_derivation`](#calculatorsregistrynew_derivation), [`is_male`](#calculatorsregistryis_male)
 - [`medcalc_kit.calculators.verify`](#medcalc_kitcalculatorsverify): [`verify`](#calculatorsverifyverify), [`check_row`](#calculatorsverifycheck_row), [`main`](#calculatorsverifymain)
-- [`medcalc_kit.probes`](#medcalc_kitprobes): [`ProbeSuite`](#probesprobesuite), [`score`](#probesscore), [`reference_answer`](#probesreference_answer), [`prompt`](#probesprompt), [`get`](#probesget), [`PROBES`](#probesprobes), [`ALL_PROBES`](#probesall_probes), [`Probe`](#probesprobe), [`read_items`](#probesread_items), [`write_items`](#probeswrite_items), [`items_frame`](#probesitems_frame), [`as_items`](#probesas_items), [`as_item`](#probesas_item)
-- [`medcalc_kit.probes.extraction`](#medcalc_kitprobesextraction): [`build`](#probesextractionbuild), [`score`](#probesextractionscore), [`score_answer`](#probesextractionscore_answer), [`score_field`](#probesextractionscore_field), [`reference_answer`](#probesextractionreference_answer), [`calculator_fields`](#probesextractioncalculator_fields), [`field_kind`](#probesextractionfield_kind), [`default_field_hint`](#probesextractiondefault_field_hint), [`DEFAULT_TEMPLATE`](#probesextractiondefault_template), [`KIND_HINT`](#probesextractionkind_hint)
-- [`medcalc_kit.probes.knowledge`](#medcalc_kitprobesknowledge): [`build`](#probesknowledgebuild), [`score`](#probesknowledgescore), [`score_answer`](#probesknowledgescore_answer), [`reference_answer`](#probesknowledgereference_answer), [`test_points`](#probesknowledgetest_points), [`eval_cases`](#probesknowledgeeval_cases), [`perturb_entities`](#probesknowledgeperturb_entities), [`with_categorical`](#probesknowledgewith_categorical), [`DEFAULT_TEMPLATE`](#probesknowledgedefault_template), [`DEFAULT_PATIENT_TEMPLATE`](#probesknowledgedefault_patient_template)
-- [`medcalc_kit.probes.substitution`](#medcalc_kitprobessubstitution): [`build`](#probessubstitutionbuild), [`score`](#probessubstitutionscore), [`score_answer`](#probessubstitutionscore_answer), [`reference_answer`](#probessubstitutionreference_answer), [`DEFAULT_TEMPLATE`](#probessubstitutiondefault_template)
-- [`medcalc_kit.probes.arithmetic`](#medcalc_kitprobesarithmetic): [`build`](#probesarithmeticbuild), [`score`](#probesarithmeticscore), [`score_answer`](#probesarithmeticscore_answer), [`reference_answer`](#probesarithmeticreference_answer), [`DEFAULT_TEMPLATE`](#probesarithmeticdefault_template)
-- [`medcalc_kit.probes.end_to_end`](#medcalc_kitprobesend_to_end): [`build`](#probesend_to_endbuild), [`score`](#probesend_to_endscore), [`score_answer`](#probesend_to_endscore_answer), [`reference_answer`](#probesend_to_endreference_answer), [`DEFAULT_TEMPLATE`](#probesend_to_enddefault_template)
-- [`medcalc_kit.probes.common`](#medcalc_kitprobescommon): [`render`](#probescommonrender), [`fmt`](#probescommonfmt), [`presented`](#probescommonpresented), [`symbol_doc`](#probescommonsymbol_doc), [`SYMBOL_DOCS`](#probescommonsymbol_docs), [`task_question`](#probescommontask_question), [`categorical_context`](#probescommoncategorical_context), [`mme_drugs`](#probescommonmme_drugs), [`inline`](#probescommoninline), [`branch_formula`](#probescommonbranch_formula), [`make_item`](#probescommonmake_item), [`numeric_answer`](#probescommonnumeric_answer), [`rel_close`](#probescommonrel_close), [`DEFAULT_SYSTEM_PROMPT`](#probescommondefault_system_prompt), [`DEFAULT_DIGITS`](#probescommondefault_digits)
-- [`medcalc_kit.generation`](#medcalc_kitgeneration): [`run_items`](#generationrun_items), [`read_records`](#generationread_records), [`done_item_ids`](#generationdone_item_ids), [`prompt_key`](#generationprompt_key), [`classify_generation`](#generationclassify_generation), [`is_degenerate`](#generationis_degenerate), [`CATEGORIES`](#generationcategories)
+- [`medcalc_kit.probes`](#medcalc_kitprobes): [`ProbeSuite`](#probesprobesuite), [`score`](#probesscore), [`reference_answer`](#probesreference_answer), [`prompt`](#probesprompt), [`get`](#probesget), [`PROBES`](#probesprobes), [`ALL_PROBES`](#probesall_probes), [`STEP_PROBES`](#probesstep_probes), [`Probe`](#probesprobe), [`read_items`](#probesread_items), [`write_items`](#probeswrite_items), [`items_frame`](#probesitems_frame), [`as_items`](#probesas_items), [`as_item`](#probesas_item)
+- [`medcalc_kit.probes.extraction`](#medcalc_kitprobesextraction): [`build`](#probesextractionbuild), [`score`](#probesextractionscore), [`score_answer`](#probesextractionscore_answer), [`score_field`](#probesextractionscore_field), [`reference_answer`](#probesextractionreference_answer), [`calculator_fields`](#probesextractioncalculator_fields), [`field_kind`](#probesextractionfield_kind), [`default_field_hint`](#probesextractiondefault_field_hint), [`TEMPLATES`](#probesextractiontemplates), [`DEFAULT_TEMPLATE`](#probesextractiondefault_template), [`KIND_HINT`](#probesextractionkind_hint)
+- [`medcalc_kit.probes.knowledge`](#medcalc_kitprobesknowledge): [`build`](#probesknowledgebuild), [`score`](#probesknowledgescore), [`score_answer`](#probesknowledgescore_answer), [`reference_answer`](#probesknowledgereference_answer), [`test_points`](#probesknowledgetest_points), [`eval_cases`](#probesknowledgeeval_cases), [`perturb_entities`](#probesknowledgeperturb_entities), [`with_categorical`](#probesknowledgewith_categorical), [`TEMPLATES`](#probesknowledgetemplates), [`PATIENT_TEMPLATES`](#probesknowledgepatient_templates), [`DEFAULT_TEMPLATE`](#probesknowledgedefault_template), [`DEFAULT_PATIENT_TEMPLATE`](#probesknowledgedefault_patient_template)
+- [`medcalc_kit.probes.substitution`](#medcalc_kitprobessubstitution): [`build`](#probessubstitutionbuild), [`score`](#probessubstitutionscore), [`score_answer`](#probessubstitutionscore_answer), [`reference_answer`](#probessubstitutionreference_answer), [`TEMPLATES`](#probessubstitutiontemplates), [`DEFAULT_TEMPLATE`](#probessubstitutiondefault_template)
+- [`medcalc_kit.probes.arithmetic`](#medcalc_kitprobesarithmetic): [`build`](#probesarithmeticbuild), [`score`](#probesarithmeticscore), [`score_answer`](#probesarithmeticscore_answer), [`reference_answer`](#probesarithmeticreference_answer), [`TEMPLATES`](#probesarithmetictemplates), [`DEFAULT_TEMPLATE`](#probesarithmeticdefault_template)
+- [`medcalc_kit.probes.end_to_end`](#medcalc_kitprobesend_to_end): [`build`](#probesend_to_endbuild), [`score`](#probesend_to_endscore), [`score_answer`](#probesend_to_endscore_answer), [`reference_answer`](#probesend_to_endreference_answer), [`answer_type`](#probesend_to_endanswer_type), [`parse_date`](#probesend_to_endparse_date), [`parse_weeks_days`](#probesend_to_endparse_weeks_days), [`TEMPLATES`](#probesend_to_endtemplates), [`DEFAULT_TEMPLATE`](#probesend_to_enddefault_template), [`ANSWER_FORMATS`](#probesend_to_endanswer_formats)
+- [`medcalc_kit.probes.common`](#medcalc_kitprobescommon): [`render`](#probescommonrender), [`resolve_template`](#probescommonresolve_template), [`template_hash`](#probescommontemplate_hash), [`fmt`](#probescommonfmt), [`presented`](#probescommonpresented), [`symbol_doc`](#probescommonsymbol_doc), [`SYMBOL_DOCS`](#probescommonsymbol_docs), [`task_question`](#probescommontask_question), [`categorical_context`](#probescommoncategorical_context), [`mme_drugs`](#probescommonmme_drugs), [`inline`](#probescommoninline), [`branch_formula`](#probescommonbranch_formula), [`make_item`](#probescommonmake_item), [`numeric_answer`](#probescommonnumeric_answer), [`rel_close`](#probescommonrel_close), [`DEFAULT_SYSTEM_PROMPT`](#probescommondefault_system_prompt), [`DEFAULT_DIGITS`](#probescommondefault_digits)
+- [`medcalc_kit.generation`](#medcalc_kitgeneration): [`run_items`](#generationrun_items), [`read_records`](#generationread_records), [`done_item_ids`](#generationdone_item_ids), [`prompt_key`](#generationprompt_key), [`model_name`](#generationmodel_name), [`classify_generation`](#generationclassify_generation), [`is_degenerate`](#generationis_degenerate), [`CATEGORIES`](#generationcategories)
 - [`medcalc_kit.generation.artifacts`](#medcalc_kitgenerationartifacts): [`repeated_ngram_share`](#generationartifactsrepeated_ngram_share), [`max_line_repeats`](#generationartifactsmax_line_repeats)
 - [`medcalc_kit.generation.hf`](#medcalc_kitgenerationhf): [`HFBackend`](#generationhfhfbackend)
 - [`medcalc_kit.evaluate`](#medcalc_kitevaluate): [`score_records`](#evaluatescore_records), [`summary`](#evaluatesummary), [`to_units`](#evaluateto_units), [`read_jsonl`](#evaluateread_jsonl)
@@ -47,6 +48,8 @@ The shortcuts below cover a whole evaluation; every module (`data`, `calculators
 
 | shortcut | documented as |
 |---|---|
+| `mk.evaluate_model` | [`benchmark.evaluate_model`](#benchmarkevaluate_model) |
+| `mk.EvaluationReport` | [`benchmark.EvaluationReport`](#benchmarkevaluationreport) |
 | `mk.load` | [`data.load`](#dataload) |
 | `mk.derive` | [`calculators.derive`](#calculatorsderive) |
 | `mk.ProbeSuite` | [`probes.ProbeSuite`](#probesprobesuite) |
@@ -56,6 +59,117 @@ The shortcuts below cover a whole evaluation; every module (`data`, `calculators
 | `mk.read_records` | [`generation.read_records`](#generationread_records) |
 | `mk.score_records` | [`evaluate.score_records`](#evaluatescore_records) |
 | `mk.summary` | [`evaluate.summary`](#evaluatesummary) |
+
+---
+
+## `medcalc_kit.benchmark`
+
+Evaluate a model on MedCalc-Bench in one call: the general score and the step-by-step diagnosis.
+
+- **General**: the original task (E2E) on every example of the benchmark (55 calculators, 1,100 test examples),
+  by category.
+- **Step by step**: on the 33 equation-based calculators, each step of the calculation measured on its own:
+  E (finding the values in the note), K (knowing the formula), S (substituting the values), A (computing), next
+  to E2E on the same examples, and per example the first step that fails.
+- **Robustness**: with `prompt_variants=3`, every prompt is also asked in two paraphrases (same information and
+  answer format, different wording), and `prompt_sensitivity` shows how much each score depends on the wording.
+
+```python
+>>> report = mk.evaluate_model(model)
+>>> report
+>>> report.general, report.steps, report.by_calculator
+```
+
+Generations are saved as they come (`<output_dir>/generations.jsonl`): run the same call again after an
+interruption to resume, or with `model=None` to rescore what was generated.
+
+### `benchmark.evaluate_model`
+
+```python
+def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None) -> EvaluationReport
+```
+
+Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
+(E, K, S, A on the equation-based calculators). Returns an EvaluationReport.
+
+model:          what `run_items` accepts: an object with `generate_batch` or `generate` (e.g. HFBackend), or a
+                function `generate(messages, max_new_tokens)`. None: only score generations already saved.
+output_dir:     where items, generations and the report go (default: medcalc_eval/<model id>). Generations are
+                appended as they come: the same call resumes an interrupted run.
+dataset:        default: MedCalc-Bench-Verified at the pinned revision (`mk.load()`), all 55 calculators.
+split:          the split(s) evaluated ("test", or your own, e.g. "dev" made with ds.split_off); per_calculator:
+                evaluate only that many examples per calculator (random, `seed`), to try a model quickly.
+steps:          the step probes to run (default all four; () for the general score only).
+k_mode:         "patient" (the model sees the values, writes the formula of its branch) or "general".
+k_pool:         patients used as K test points; "auto": the "train" examples that do not leak into the
+                evaluated split(s) (`usable_train_pool`), if any; None: perturbations.
+probe_options:  build options per probe, e.g. {"E2E": {"max_new_tokens": 4096}} (see ProbeSuite).
+prompt_variants: how many wordings of each prompt to use (1 to 3: "v1" is the default, "v2" and "v3" are
+                paraphrases with the same information and format), or their names. The views use the first one;
+                `report.prompt_sensitivity` compares them. Each variant multiplies the number of generations.
+batch_size, model_id: passed to run_items; scoring: passed to score_records.
+
+```python
+>>> def always_12(messages, max_new_tokens):
+...     return '{"answer": 12, "result": 12}'
+>>> import tempfile
+>>> report = evaluate_model(always_12, tempfile.mkdtemp(), dataset=mk.data.demo(), split="demo", steps=())
+>>> float(report.general.loc["all", "accuracy"])           # right for the anion gap only
+0.25
+```
+
+### `benchmark.EvaluationReport`
+
+```python
+class EvaluationReport(model: str, items: pd.DataFrame, scores: pd.DataFrame, output_dir: Path | None = None) -> None
+```
+
+Result of `evaluate_model`. Every view is a DataFrame; `scores` has one row per answer (score_records columns,
+with the answer `text`, the `verdict`, `calculator_name` and `calculator_category`) and `items` one row per
+prompt, for any further analysis.
+
+general:        end-to-end accuracy per category of calculator, and overall ("all")
+steps:          per step (E, K, S, A, and E2E on the same examples): well-formed answers, competence, accuracy
+by_calculator:  accuracy per calculator and step: where the chain breaks
+examples:       one row per example: correctness at each step and the first step that fails
+first_failures: for the equation-based examples, how often each step is the first to fail, and the E2E accuracy
+                in each case
+consistency:    E2E accuracy when every step succeeds and when a step fails: how faithfully the steps represent
+                the task
+prompt_sensitivity: accuracy of each step with each prompt variant, their mean, standard deviation and range
+
+The views use the default prompts ("v1"); paraphrases (prompt_variants > 1) only enter prompt_sensitivity.
+
+```python
+>>> def oracle(messages, max_new_tokens):                   # a perfect "model", to show the report
+...     return mk.reference_answer(by_prompt[mk.generation.prompt_key(messages, max_new_tokens)])
+>>> ds = mk.data.demo()
+>>> items = mk.ProbeSuite({"E": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}).build(ds)
+>>> by_prompt = {mk.generation.prompt_key(it["messages"], it["max_new_tokens"]): it
+...              for it in mk.probes.as_items(items)}
+>>> import tempfile
+>>> report = mk.evaluate_model(oracle, tempfile.mkdtemp(), dataset=ds, split="demo")
+>>> report
+MedCalc-Bench evaluation of oracle
+  general (end to end): 100.0% of 4 examples (4 calculators)
+  step by step (4 examples of equation-based calculators):
+    E    extraction         100.0%
+    K    formula knowledge  100.0%
+    S    substitution       100.0%
+    A    arithmetic         100.0%
+    E2E  end to end         100.0%
+>>> report.general
+          n  well_formed  accuracy
+category
+all       4          1.0       1.0
+lab test  2          1.0       1.0
+physical  2          1.0       1.0
+```
+
+#### `.save(self, directory: str | Path | None = None) -> Path`
+
+Write every view as CSV (and the scores) to `directory` (default: the evaluation's output_dir).
+
 
 ---
 
@@ -84,11 +198,12 @@ MedCalcDataset(...)
 ### `data.demo`
 
 ```python
-def demo() -> MedCalcDataset
+def demo(n_per_calculator: int = 1, split: str = 'demo') -> MedCalcDataset
 ```
 
-Four hand-written examples (Cockcroft-Gault, BMI, anion gap, mean arterial pressure) with the dataset's
-columns, to try every function offline. Ground truths come from the registry; tolerance interval ±5 %.
+Hand-written examples (Cockcroft-Gault, BMI, anion gap, mean arterial pressure) with the dataset's columns,
+to try every function offline: `n_per_calculator` patients per calculator (the first one is always the same).
+Ground truths come from the registry; tolerance interval ±5 %.
 
 ```python
 >>> ds = data.demo()
@@ -98,6 +213,8 @@ columns, to try every function offline. Ground truths come from the registry; to
 1   demo:6:1                            Body Mass Index (BMI)            22.857143
 2  demo:39:1                                        Anion Gap            12.000000
 3   demo:5:1                     Mean Arterial Pressure (MAP)           110.000000
+>>> data.demo(5)
+MedCalcDataset(20 examples, 4 calculators; demo: 20)
 ```
 
 ### `data.MedCalcDataset`
@@ -106,29 +223,39 @@ columns, to try every function offline. Ground truths come from the registry; to
 class MedCalcDataset(df: pd.DataFrame)
 ```
 
-A filterable collection of examples backed by a DataFrame (`.df`, original column names).
+A collection of examples backed by a DataFrame (`.df`, original column names, plus `entities`, `split` and
+`example_id`). Every method returns a new dataset; the original is never modified.
 
-Iterating yields `Example`s; `ds[i]` is the i-th example, `ds["test:2:9"]` the example with that id.
+Iterating yields `Example`s; `ds[i]` is the i-th example, `ds["test:2:9"]` the example with that id. The `split`
+column is free: besides the benchmark's "train" and "test", create any split with `split_off`, `folds`,
+`assign_split` or `with_splits`. An `example_id` never changes, so its prefix keeps the original split.
 
 ```python
 >>> ds = data.demo()
+>>> ds
+MedCalcDataset(4 examples, 4 calculators; demo: 4)
 >>> len(ds), ds.example_ids[:2]
 (4, ['demo:2:1', 'demo:6:1'])
 >>> [ex.calculator_id for ex in ds]
 ['2', '6', '39', '5']
 ```
 
-#### `.filter(self, calculator: str | int | Iterable[str | int] | None = None, category: str | None = None, split: str | None = None) -> MedCalcDataset`
+#### `.filter(self, calculator: str | int | Iterable[str | int] | None = None, category: str | Iterable[str] | None = None, split: str | Iterable[str] | None = None, note_type: str | Iterable[str] | None = None, where: Callable[[pd.DataFrame], Any] | None = None) -> MedCalcDataset`
 
-Examples matching every given criterion: calculator id(s), category ("lab test", "physical",
-"dosage"...) and split ("train" / "test").
+Examples matching every given criterion. Each criterion takes one value or a list: calculator id(s),
+category ("lab test", "physical", "dosage", "risk", "severity", "diagnosis", "date"), split, note type
+("Extracted", "Synthetic"...). `where` is any condition on the DataFrame: a function df -> boolean mask.
 
 ```python
->>> ds = data.demo()
->>> ds.filter(calculator=[2, "6"]).example_ids
-['demo:2:1', 'demo:6:1']
->>> len(ds.filter(category="lab test"))
-2
+>>> ds = data.demo(3)
+>>> ds.filter(calculator=[2, "6"]).calculators()[["Calculator ID", "demo"]]
+  Calculator ID  demo
+0             2     3
+1             6     3
+>>> len(ds.filter(category=["lab test", "physical"]))
+12
+>>> ds.filter(where=lambda df: df["Ground Truth Answer"] > 100).example_ids
+['demo:5:1', 'demo:5:2', 'demo:5:3']
 ```
 
 #### `.select(self, example_ids: Iterable[str]) -> MedCalcDataset`
@@ -163,6 +290,89 @@ Only the closed-form (equation-based) calculators (see EQUATION_CATEGORIES).
 
 **`.example_ids`** (property): The example ids, in order.
 
+#### `.splits(self) -> pd.DataFrame`
+
+Number of examples and of calculators per split.
+
+```python
+>>> data.demo(5).split_off("dev", fraction=0.4, from_split="demo").splits()
+       examples  calculators
+split
+demo         12            4
+dev           8            4
+```
+
+#### `.assign_split(self, example_ids: Iterable[str], split: str) -> MedCalcDataset`
+
+Move the given examples to `split` (a new or existing split name).
+
+```python
+>>> ds = data.demo().assign_split(["demo:2:1", "demo:6:1"], "hard")
+>>> ds.splits().examples.to_dict()
+{'demo': 2, 'hard': 2}
+```
+
+#### `.split_off(self, name: str, fraction: float | None = None, n: int | None = None, *, from_split: str = 'train', per_calculator: bool = True, seed: int = 0, exclude_leaks: bool = False, leak_against: str | Iterable[str] = 'test') -> MedCalcDataset`
+
+Move part of `from_split` to a new split `name`, at random (reproducible with `seed`), e.g. a dev set
+taken from the training set. Give `fraction` (of each calculator's examples, at least one) or `n` (per
+calculator; in total if per_calculator=False).
+
+exclude_leaks=True never moves an example that leaks into `leak_against` (same note text, or an extracted
+note of the same patient, see data.quality), so the new split is clean with respect to the test set.
+
+```python
+>>> ds = data.demo(5)
+>>> dev = ds.split_off("dev", fraction=0.2, from_split="demo")
+>>> dev.splits().examples.to_dict()
+{'demo': 16, 'dev': 4}
+>>> dev.filter(split="dev").calculators()["dev"].tolist()       # stratified: one per calculator
+[1, 1, 1, 1]
+>>> ds.split_off("dev", n=3, per_calculator=False, from_split="demo").splits().examples.to_dict()
+{'demo': 17, 'dev': 3}
+```
+
+#### `.folds(self, k: int, *, from_split: str = 'train', name: str = 'dev', per_calculator: bool = True, seed: int = 0) -> list[MedCalcDataset]`
+
+k-fold cross-validation over `from_split`: k datasets, the i-th with fold i moved to split `name` and the
+other folds left in `from_split`. Folds are stratified by calculator and disjoint.
+
+```python
+>>> folds = data.demo(5).folds(5, from_split="demo")
+>>> [f.splits().examples.to_dict() for f in folds[:2]]
+[{'demo': 16, 'dev': 4}, {'demo': 16, 'dev': 4}]
+>>> len(set().union(*(f.filter(split="dev").example_ids for f in folds)))       # every example once
+20
+```
+
+#### `.with_splits(self, assignment: str | Path | pd.DataFrame | pd.Series | Mapping[str, str], *, drop_unassigned: bool = False) -> MedCalcDataset`
+
+Apply a split assignment {example_id: split}: a CSV file written by `save_splits`, a DataFrame with
+`example_id` and `split` columns, a Series or a dict. Examples absent from it keep their split, or are
+dropped with drop_unassigned=True.
+
+```python
+>>> ds = data.demo().with_splits({"demo:2:1": "train", "demo:6:1": "train", "demo:39:1": "test"})
+>>> ds.splits().examples.to_dict()
+{'demo': 1, 'test': 1, 'train': 2}
+>>> len(data.demo().with_splits({"demo:2:1": "train"}, drop_unassigned=True))
+1
+```
+
+#### `.save_splits(self, path: str | Path) -> Path`
+
+Save the split of every example (CSV: example_id, split), to reproduce a split later with
+`with_splits` on a freshly loaded dataset.
+
+```python
+>>> import tempfile, pathlib
+>>> path = pathlib.Path(tempfile.mkdtemp()) / "splits.csv"
+>>> ds = data.demo(5).split_off("dev", fraction=0.2, from_split="demo")
+>>> _ = ds.save_splits(path)
+>>> data.demo(5).with_splits(path).splits().equals(ds.splits())
+True
+```
+
 #### `.calculators(self) -> pd.DataFrame`
 
 One row per calculator: id, name, category and number of examples per split.
@@ -176,16 +386,50 @@ One row per calculator: id, name, category and number of examples per split.
 3            39  lab test     1
 ```
 
+### `data.concat`
+
+```python
+def concat(*datasets: MedCalcDataset) -> MedCalcDataset
+```
+
+One dataset with the examples of all the given ones (also `ds1 + ds2`). Example ids must be unique.
+
+```python
+>>> mine = data.from_records([{"Calculator ID": "6", "entities": {"weight": [80, "kg"], "height": [180, "cm"]},
+...                            "Ground Truth Answer": 24.69}], split="mine")
+>>> data.demo() + mine
+MedCalcDataset(5 examples, 4 calculators; demo: 4, mine: 1)
+```
+
+### `data.from_records`
+
+```python
+def from_records(records: Iterable[Mapping[str, Any]] | pd.DataFrame, split: str = 'custom') -> MedCalcDataset
+```
+
+A dataset from your own examples, with the benchmark's column names. Each record needs "Calculator ID" and
+"entities" (or "Relevant Entities", parsed); "Patient Note", "Question", "Ground Truth Answer", "Lower Limit",
+"Upper Limit" are needed by the probes that use them (limits default to the ground truth ±5 %). Missing
+`example_id`s become "<split>:<calculator id>:<n>"; missing names and categories come from the registry.
+
+```python
+>>> ds = data.from_records([{"Calculator ID": 6, "entities": {"weight": [80, "kg"], "height": [180, "cm"]},
+...                          "Ground Truth Answer": 24.69}])
+>>> ds[0]
+Example('custom:6:1', calculator 6 'Body Mass Index (BMI)', ground truth 24.69)
+```
+
 ### `data.Example`
 
 ```python
-class Example(example_id: str, split: str, calculator_id: str, calculator_name: str, category: str, note: str, question: str, entities: dict[str, Any], ground_truth: float, lower: float, upper: float, note_id: str = '', note_type: str = '', explanation: str = '') -> None
+class Example(example_id: str, split: str, calculator_id: str, calculator_name: str, category: str, note: str, question: str, entities: dict[str, Any], ground_truth: float | str, lower: float | str, upper: float | str, note_id: str = '', note_type: str = '', explanation: str = '') -> None
 ```
 
 One benchmark example: a patient note, a question and the annotated input values (`entities`).
 
 `entities` maps each input to its annotation, e.g. {"age": [51, "years"], "sex": "Female"}; quantities are
-[value, unit]. `ground_truth` must fall in [lower, upper] for an answer to count as correct.
+[value, unit]. `ground_truth` must fall in [lower, upper] for an answer to count as correct. For the date
+calculators, `ground_truth` is a string (a date "MM/DD/YYYY", or "('16 weeks', '1 days')") and lower = upper.
 
 ```python
 >>> ex = data.demo()[0]
@@ -325,11 +569,12 @@ Data quality and leakage control for building clean evaluation pools from the tr
 ### `data.quality.usable_train_pool`
 
 ```python
-def usable_train_pool(data) -> pd.DataFrame
+def usable_train_pool(data, train: str = 'train', test: str | Iterable[str] = 'test') -> pd.DataFrame
 ```
 
-Train rows that are leakage-free, reproduced by the registry and plausible: a clean pool of other patients,
-e.g. for K test points (ProbeSuite(k_pool=...)).
+Rows of split `train` that are leakage-free with respect to `test`, reproduced by the registry and
+plausible: a clean pool of other patients, e.g. for K test points (ProbeSuite(k_pool=...)). With custom splits,
+pass every split you evaluate as `test`, e.g. test=["dev", "test"].
 
 ```python
 >>> pool = usable_train_pool(data.load(equation_only=True))
@@ -338,16 +583,39 @@ e.g. for K test points (ProbeSuite(k_pool=...)).
 ### `data.quality.flag_train_rows`
 
 ```python
-def flag_train_rows(data) -> pd.DataFrame
+def flag_train_rows(data, train: str = 'train', test: str | Iterable[str] = 'test') -> pd.DataFrame
 ```
 
-Train rows (DataFrame) with columns leak_text, leak_patient, registry_ok, plausible.
-`data`: a MedCalcDataset or a DataFrame containing both the train and test splits.
+Rows of split `train` (DataFrame) with columns leak_text, leak_patient (with respect to the split(s) `test`),
+registry_ok, plausible. `data`: a MedCalcDataset or a DataFrame containing both splits.
 
 ```python
 >>> flags = flag_train_rows(data.load(equation_only=True))
 >>> flags[["leak_text", "leak_patient", "registry_ok", "plausible"]].mean()
 ```
+
+### `data.quality.leak_flags`
+
+```python
+def leak_flags(data, split: str = 'train', against: str | Iterable[str] = 'test') -> pd.DataFrame
+```
+
+For the rows of `split`: `leak_text` (the same note, up to case and spacing, appears in `against`) and
+`leak_patient` (an "Extracted" note of a patient whose extracted note is in `against`). Indexed like the rows.
+
+```python
+>>> ds = mk.data.demo(2).assign_split(["demo:2:1"], "test")
+>>> leak_flags(ds, split="demo").sum().to_dict()           # demo notes are all different
+{'leak_text': 0, 'leak_patient': 0}
+```
+
+### `data.quality.leaking_rows`
+
+```python
+def leaking_rows(data, split: str = 'train', against: str | Iterable[str] = 'test') -> pd.Series
+```
+
+Boolean Series over the rows of `split`: True if the row leaks into `against` (see leak_flags).
 
 ### `data.quality.registry_agrees`
 
@@ -710,6 +978,10 @@ class ProbeSuite(probes: Iterable[str] | Mapping[str, Mapping[str, Any]] = ('E',
 
 Builds the items of several probes at once, giving each probe the context it needs.
 
+E2E items are built for every example of the benchmark. The step probes (E, K, S, A) need the reference
+computation, so they are built only for the 33 equation-based calculators of the registry; other examples
+(rule-based scores, dates) get E2E only.
+
 probes:  probe names ("E", "K", "S", "A", "E2E"), or {label: options} where options are keyword arguments of
          that probe's build() plus an optional "task" (the probe to use; default: the label). Labels let you
          build several variants of a probe, e.g.
@@ -743,9 +1015,9 @@ examples: a MedCalcDataset, a DataFrame of dataset rows, or Examples / row dicts
 ```python
 >>> items = ProbeSuite("E2E").build(mk.data.demo())
 >>> list(items.columns)
-['item_id', 'probe', 'example_id', 'calculator_id', 'calculator_name', 'max_new_tokens', 'messages',
- 'reference']
->>> {k: round(v, 2) for k, v in items.loc[0, "reference"].items()}
+['item_id', 'probe', 'example_id', 'calculator_id', 'calculator_name', 'template', 'template_hash',
+ 'max_new_tokens', 'messages', 'reference']
+>>> {k: round(v, 2) for k, v in items.loc[0, "reference"].items() if k != "answer_type"}
 {'ground_truth': 79.88, 'lower': 75.89, 'upper': 83.88}
 >>> list(ProbeSuite("E2E").build(mk.data.demo(), as_frame=False))
 ['E2E']
@@ -842,6 +1114,12 @@ PROBES = {'E': Probe(name='E', title='Extraction', measures='finding the input v
 
 ```python
 ALL_PROBES = ('E', 'K', 'S', 'A', 'E2E')
+```
+
+### `probes.STEP_PROBES`
+
+```python
+STEP_PROBES = ('E', 'K', 'S', 'A')
 ```
 
 ### `probes.Probe`
@@ -976,7 +1254,8 @@ fields: field name -> kind for this calculator (see calculator_fields); default:
 For MME (calculator 49) the drug fields are always taken from the example itself.
 
 kind_hints: answer format per field kind (overrides KIND_HINT); field_hints: answer format for specific
-field names (overrides the kind's format). template: prompt text, placeholders {note} and {fields};
+field names (overrides the kind's format). template: prompt text with placeholders {note} and {fields}, or the
+name of a variant of TEMPLATES ("v1", "v2", "v3");
 max_new_tokens: token budget; system_prompt: None for none; label: the item's probe label (default "E").
 
 ```python
@@ -1093,6 +1372,12 @@ administrations per day (not a daily dose), '<drug> Dose' the dose of one admini
 '{"value": <number of administrations per day>, "unit": "per day"}'
 ```
 
+### `probes.extraction.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': "Patient note:\n{note}\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n{fields}\n\nYou may think briefly, then end your answer with a single ...
+```
+
 ### `probes.extraction.DEFAULT_TEMPLATE`
 
 ```python
@@ -1150,7 +1435,8 @@ point_pool: entity dicts of other (leakage-free) patients of the same calculator
 so that thresholds are explored realistically (in "patient" mode, only those in the patient's branch are
 kept; pass a large pool). Without a pool, perturbations of the patient are used at scoring time.
 mode: "general" (no values shown, one case per branch) or "patient" (values shown, this patient's formula).
-template: defaults to DEFAULT_TEMPLATE ("general") or DEFAULT_PATIENT_TEMPLATE ("patient").
+template: prompt text, or the name of a variant ("v1", "v2", "v3") of TEMPLATES ("general" mode) or
+PATIENT_TEMPLATES ("patient" mode); default "v1" (DEFAULT_TEMPLATE / DEFAULT_PATIENT_TEMPLATE).
 n_points: test points kept from the pool; symbol_docs: {variable: description} overriding
 common.SYMBOL_DOCS; digits: significant digits of the values shown in "patient" mode.
 
@@ -1282,6 +1568,18 @@ Continuous values from `point`, categorical (str/bool) fields from `entities`.
 {'age': [40, 'years'], 'sex': 'Female'}
 ```
 
+### `probes.knowledge.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'Task: {question}\n\nYou are NOT given the patient\'s measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n{context}\n\nVariables:\n{variables}\n\nIf the formula depends on thresholds or categories, give one case per branc ...
+```
+
+### `probes.knowledge.PATIENT_TEMPLATES`
+
+```python
+PATIENT_TEMPLATES = {'v1': 'Task: {question}\n\nKnown patient characteristics:\n{context}\n\nPatient values:\n{values}\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient\'s numbers.\n\nVariables:\n{variables}\n\nUse only n ...
+```
+
 ### `probes.knowledge.DEFAULT_TEMPLATE`
 
 ```python
@@ -1330,7 +1628,8 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
 
 The item for one example: the formula of this patient's branch and the values, to be substituted.
 
-template: prompt text, placeholders {calculator_name}, {target}, {formula}, {values}; max_new_tokens: token
+template: prompt text with placeholders {calculator_name}, {target}, {formula}, {values}, or the name of a
+variant of TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token
 budget; system_prompt: None for none; digits: significant digits of the values shown (the expected
 expression uses the same values); symbol_docs: {variable: description} overriding common.SYMBOL_DOCS;
 label: the item's probe name.
@@ -1392,6 +1691,12 @@ A correct answer: the expected substituted expression in the expected JSON forma
 '{"expression": "140 - (104 + 24)"}'
 ```
 
+### `probes.substitution.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'Formula for {calculator_name}:\n{target} = {formula}\n\nVariable values:\n{values}\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {"expression": "<formula with the values substituted>"}', 'v2': 'Here is the formula used for {calculator_name}:\n\ ...
+```
+
 ### `probes.substitution.DEFAULT_TEMPLATE`
 
 ```python
@@ -1426,7 +1731,8 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
 
 The item for one example: compute this patient's formula with the values already substituted.
 
-template: prompt text, placeholder {expression}; max_new_tokens: token budget; system_prompt: None for none;
+template: prompt text with placeholder {expression}, or the name of a variant of TEMPLATES ("v1", "v2", "v3");
+max_new_tokens: token budget; system_prompt: None for none;
 digits: significant digits of the patient values inside the expression; label: the item's probe name.
 
 ```python
@@ -1480,6 +1786,12 @@ A correct answer: the gold value in the expected JSON format.
 '{"result": 12.0}'
 ```
 
+### `probes.arithmetic.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n{expression}\n\nWork carefully without any tool. End your answer with a JSON object of the form {"result": <number with at least 4 significant digits>}', 'v2': 'Calculate the following expression without using any tool:\n\n{ex ...
+```
+
 ### `probes.arithmetic.DEFAULT_TEMPLATE`
 
 ```python
@@ -1491,10 +1803,16 @@ DEFAULT_TEMPLATE = 'Compute the value of the following expression (ln is the nat
 
 ## `medcalc_kit.probes.end_to_end`
 
-E2E — End to end: the original MedCalc-Bench task (note + question -> number).
+E2E — End to end: the original MedCalc-Bench task (note + question -> answer), for all 55 calculators.
 
-Scoring: the answer must fall within the benchmark's [Lower Limit, Upper Limit] interval, or, if `rel_tol` is
-given, within rel_tol of the ground truth. Error types: format_invalid (no {"answer": ...}), out_of_bounds.
+Three kinds of answers, detected from the ground truth (`answer_type`):
+- "number" (52 calculators): must fall within the benchmark's [Lower Limit, Upper Limit] interval, or, if
+  `rel_tol` is given, within rel_tol of the ground truth;
+- "date" (estimated due date, date of conception): the same calendar date (MM/DD/YYYY, YYYY-MM-DD or
+  "September 11, 2014" are all read);
+- "weeks_days" (estimated gestational age): the same number of weeks and days.
+
+Error types: format_invalid (no readable {"answer": ...}), out_of_bounds (number), wrong_date, wrong_duration.
 
 ```python
 >>> item = build(mk.data.demo()[2])                         # anion gap, ground truth 12
@@ -1508,15 +1826,19 @@ given, within rel_tol of the ground truth. Error types: format_invalid (no {"ans
 def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 2048, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, label: str = 'E2E') -> Item
 ```
 
-The item for one example: the patient note and the benchmark question.
+The item for one example: the patient note and the benchmark question. Works for every calculator of the
+benchmark, including the rule-based scores and the date calculators.
 
-template: prompt text, placeholders {note} and {question}; max_new_tokens: token budget;
+template: prompt text with placeholders {note}, {question} and {answer_format}, or the name of a variant of
+TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token budget;
 system_prompt: None for none; label: the item's probe name.
 
 ```python
 >>> item = build(mk.data.demo()[2], max_new_tokens=512)
->>> item["max_new_tokens"], item["reference"]["ground_truth"]
-(512, 12.0)
+>>> item["max_new_tokens"], item["reference"]["ground_truth"], item["reference"]["answer_type"]
+(512, 12.0, 'number')
+>>> print(item["messages"][-1]["content"].splitlines()[-1])
+Think step by step, then end your answer with a JSON object of the form {"answer": <number>}
 ```
 
 ### `probes.end_to_end.score`
@@ -1525,7 +1847,7 @@ system_prompt: None for none; label: the item's probe name.
 def score(item: Item, text: str, **options: Any) -> dict[str, Any]
 ```
 
-Score a model answer for an E2E item. Options: rel_tol (replaces the benchmark interval).
+Score a model answer for an E2E item. Options: rel_tol (replaces the benchmark interval, numbers only).
 
 ```python
 >>> score(build(mk.data.demo()[2]), "The anion gap is 12 mEq/L.")["error_type"]   # JSON required
@@ -1538,7 +1860,8 @@ Score a model answer for an E2E item. Options: rel_tol (replaces the benchmark i
 def score_answer(reference: dict[str, Any], text: str, *, rel_tol: float | None = None) -> dict[str, Any]
 ```
 
-Score a model answer against an E2E reference ({"ground_truth", "lower", "upper"}).
+Score a model answer against an E2E reference ({"ground_truth", "lower", "upper", "answer_type"}).
+`rel_error` is set for numbers, `error_days` (signed) for dates and durations.
 
 ```python
 >>> ref = {"ground_truth": 100.0, "lower": 95.0, "upper": 105.0}
@@ -1546,6 +1869,9 @@ Score a model answer against an E2E reference ({"ground_truth", "lower", "upper"
 {'format_valid': True, 'correct': True, 'error_type': None, 'rel_error': 0.04}
 >>> score_answer(ref, '{"answer": 104}', rel_tol=0.01)["correct"]
 False
+>>> ref = {"ground_truth": "06/16/2012", "lower": "06/16/2012", "upper": "06/16/2012", "answer_type": "date"}
+>>> score_answer(ref, '{"answer": "06/23/2012"}')
+{'format_valid': True, 'correct': False, 'error_type': 'wrong_date', 'error_days': 7}
 ```
 
 ### `probes.end_to_end.reference_answer`
@@ -1561,10 +1887,66 @@ A correct answer: the ground truth in the expected JSON format.
 '{"answer": 12.0}'
 ```
 
+### `probes.end_to_end.answer_type`
+
+```python
+def answer_type(ground_truth: float | str) -> str
+```
+
+"number", "date" or "weeks_days", from a ground truth.
+
+```python
+>>> answer_type(12.0), answer_type("09/11/2014"), answer_type("('16 weeks', '1 days')")
+('number', 'date', 'weeks_days')
+```
+
+### `probes.end_to_end.parse_date`
+
+```python
+def parse_date(value: Any) -> date | None
+```
+
+A calendar date from a model answer, or None.
+
+```python
+>>> parse_date("09/11/2014"), parse_date("2014-09-11"), parse_date("September 11, 2014")
+(datetime.date(2014, 9, 11), datetime.date(2014, 9, 11), datetime.date(2014, 9, 11))
+>>> parse_date("The due date is 9/11/2014.")
+datetime.date(2014, 9, 11)
+```
+
+### `probes.end_to_end.parse_weeks_days`
+
+```python
+def parse_weeks_days(value: Any) -> tuple[int, int] | None
+```
+
+(weeks, days) from a model answer: {"weeks": 16, "days": 1}, [16, 1], "(16 weeks, 1 day)"... or None.
+Days beyond 6 are carried into weeks.
+
+```python
+>>> parse_weeks_days({"weeks": 16, "days": 1}), parse_weeks_days("('16 weeks', '1 days')")
+((16, 1), (16, 1))
+>>> parse_weeks_days([15, 8]), parse_weeks_days("3 weeks"), parse_weeks_days("soon")
+((16, 1), (3, 0), None)
+```
+
+### `probes.end_to_end.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'Patient note:\n{note}\n\nQuestion: {question}\n\nThink step by step, then end your answer with a JSON object of the form {"answer": {answer_format}}', 'v2': 'Here is a patient note.\n\n{note}\n\nAnswer this question about the patient: {question}\n\nReason step by step and finish with a JSON object {"answer": {answer_format}}', 'v3': '{note}\n\n{question}\n\nWork it out, then end with {"ans ...
+```
+
 ### `probes.end_to_end.DEFAULT_TEMPLATE`
 
 ```python
-DEFAULT_TEMPLATE = 'Patient note:\n{note}\n\nQuestion: {question}\n\nThink step by step, then end your answer with a JSON object of the form {"answer": <number>}'
+DEFAULT_TEMPLATE = 'Patient note:\n{note}\n\nQuestion: {question}\n\nThink step by step, then end your answer with a JSON object of the form {"answer": {answer_format}}'
+```
+
+### `probes.end_to_end.ANSWER_FORMATS`
+
+```python
+ANSWER_FORMATS = {'number': '<number>', 'date': '"<MM/DD/YYYY>"', 'weeks_days': '{"weeks": <integer>, "days": <integer>}'}
 ```
 
 
@@ -1594,6 +1976,33 @@ Replace the `{name}` placeholders whose name is given; leave every other brace u
 ```python
 >>> render('Compute {expression}, reply {"result": <number>} {unknown}', expression="1 + 1")
 'Compute 1 + 1, reply {"result": <number>} {unknown}'
+```
+
+### `probes.common.resolve_template`
+
+```python
+def resolve_template(template: str | None, templates: dict[str, str]) -> tuple[str, str]
+```
+
+(name, text) of a template given by variant name ("v2"), by text, or None (the first variant). A text that
+is not one of the variants is named "custom".
+
+```python
+>>> resolve_template("v2", {"v1": "A {x}", "v2": "B {x}"}), resolve_template("C {x}", {"v1": "A {x}"})
+(('v2', 'B {x}'), ('custom', 'C {x}'))
+```
+
+### `probes.common.template_hash`
+
+```python
+def template_hash(template: str) -> str
+```
+
+Short hash of a template text, recorded in each item so that the exact prompt can be cited.
+
+```python
+>>> template_hash("Compute {expression}.")
+'6366847ca0'
 ```
 
 ### `probes.common.fmt`
@@ -1713,11 +2122,12 @@ def branch_formula(example: Example, digits: int = 6) -> tuple[expr.Node, dict[s
 ### `probes.common.make_item`
 
 ```python
-def make_item(example: Example, probe: str, user: str, reference: dict[str, Any], max_new_tokens: int, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, task: str | None = None) -> Item
+def make_item(example: Example, probe: str, user: str, reference: dict[str, Any], max_new_tokens: int, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, task: str | None = None, template: tuple[str, str] | None = None) -> Item
 ```
 
 Assemble an item (used by every probe's build). task: the probe that scores this item when `probe` is a
-custom label (e.g. two K variants "K", "Kg").
+custom label (e.g. two K variants "K", "Kg"). template: (name, text) of the template used, recorded as
+`template` (its name) and `template_hash`.
 
 ```python
 >>> item = make_item(mk.data.demo()[1], "A", "Compute 1 + 1", {"gold_value": 2.0}, 64, system_prompt=None)
@@ -1849,6 +2259,20 @@ Short hash identifying a prompt (messages + token budget): items with the same k
 ```python
 >>> prompt_key([{"role": "user", "content": "2 + 2 = ?"}], 64)
 '14ce2533d1765515'
+```
+
+### `generation.model_name`
+
+```python
+def model_name(model: Any) -> str
+```
+
+The id recorded for a model: its `model_id` attribute, else its (function) name.
+
+```python
+>>> def my_model(messages, max_new_tokens): ...
+>>> model_name(my_model)
+'my_model'
 ```
 
 ### `generation.classify_generation`
@@ -2004,7 +2428,7 @@ def score_records(records: pd.DataFrame | Iterable[dict[str, Any]] | str | Path,
 ```
 
 Score model answers: one row per answer, with its artifact category, correctness (only well-formed answers
-can be correct) and error type.
+can be correct) and error type (for an empty, truncated or looping answer: that category).
 
 records:    the answers: the output file of `run_items` (path), its DataFrame (`read_records`), or any
             DataFrame / list of dicts with at least `item_id` and `text`. `n_new_tokens` (to detect truncated

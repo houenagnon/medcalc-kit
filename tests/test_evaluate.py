@@ -56,3 +56,9 @@ def test_collapse_uses_task_so_labelled_variants_collapse_too():
          "correct": True, "well_formed": True, "category": "well_formed"} for i in range(3)])
     assert len(to_units(df)) == 1
     assert len(to_units(df, collapse=())) == 3
+
+
+def test_unusable_answers_report_their_category_as_error():
+    item = a_item(0)
+    df = score_records([record(item, '{"result": 10}', n_new_tokens=100)], [item])     # correct but cut off
+    assert df.category[0] == "truncated" and not df.correct[0] and df.error_type[0] == "truncated"

@@ -46,7 +46,7 @@ def score_records(records: pd.DataFrame | Iterable[dict[str, Any]] | str | Path,
                   condition: dict[str, Any] | None = None, scoring: dict[str, dict[str, Any]] | None = None,
                   artifacts: dict[str, Any] | None = None, details: bool = False) -> pd.DataFrame:
     """Score model answers: one row per answer, with its artifact category, correctness (only well-formed answers
-    can be correct) and error type.
+    can be correct) and error type (for an empty, truncated or looping answer: that category).
 
     records:    the answers: the output file of `run_items` (path), its DataFrame (`read_records`), or any
                 DataFrame / list of dicts with at least `item_id` and `text`. `n_new_tokens` (to detect truncated
@@ -84,9 +84,12 @@ def score_records(records: pd.DataFrame | Iterable[dict[str, Any]] | str | Path,
         cat = classify_generation(text, n_new, item["max_new_tokens"], s["format_valid"], **(artifacts or {}))
         row = {**(condition or {}), "item_id": rec["item_id"], "example_id": item["example_id"],
                "calculator_id": item["calculator_id"], "probe": item["probe"], "task": task,
+               "template": item.get("template"),
                "prompt_key": rec.get("prompt_key") or prompt_key(item["messages"], item["max_new_tokens"]),
                "category": cat, "well_formed": cat == "well_formed",
-               "correct": bool(s["correct"]) and cat == "well_formed", "error_type": s.get("error_type"),
+               "correct": bool(s["correct"]) and cat == "well_formed",
+               # an unusable answer (empty, truncated, looping) is reported as such, whatever the probe found in it
+               "error_type": cat if cat in ("empty", "truncated", "degenerate") else s.get("error_type"),
                "n_new_tokens": n_new, "seconds": rec.get("seconds", 0.0)}
         if details:
             row.update(text=text, verdict=s)
