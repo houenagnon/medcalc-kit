@@ -183,7 +183,8 @@ def build(item_e2e: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, 
     item = make_item(ex, "judge", user, {"judged_item_id": item_e2e["item_id"], "judged_record": key,
                                          "choices": choices}, max_new_tokens, system_prompt, task="judge",
                      template=(name, text))
-    item["item_id"] = f"{item_e2e['item_id']}:judge:{key}"
+    # the template's hash is part of the id: after a change of the prompt, a resumed run judges again
+    item["item_id"] = f"{item_e2e['item_id']}:judge:{key}:{item['template_hash'][:6]}"
     return item
 
 

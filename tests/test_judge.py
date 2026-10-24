@@ -98,3 +98,9 @@ def test_judge_reads_latex_quotes_and_states_the_rules():
     for variant in ("v1", "v2", "v3"):
         text = judge.build(E2E.iloc[0], records()[0], example=DS[0], template=variant)["messages"][-1]["content"]
         assert judge.JUDGING_RULES in text and "metres instead of centimetres" in text
+
+
+def test_a_new_prompt_is_judged_again():
+    a = judge.build(E2E.iloc[0], records()[0], example=DS[0])
+    b = judge.build(E2E.iloc[0], records()[0], example=DS[0], template="v2")
+    assert a["item_id"] != b["item_id"] and a["item_id"].endswith(a["template_hash"][:6])
