@@ -122,6 +122,7 @@ def signature(name: str, obj) -> str:
     sig = str(sig.replace(parameters=params))
     # annotations are strings (from __future__ import annotations): drop their quotes, keep those of defaults
     sig = re.sub(r"(: |-> )'([^']*)'", r"\1\2", sig)
+    sig = re.sub(r"^\((self|cls)(, )?", "(", sig)                 # methods: no self / cls
     return f"{name}{sig}"
 
 

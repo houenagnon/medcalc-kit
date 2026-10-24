@@ -22,16 +22,40 @@ class HFBackend:
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(model_id, dtype=getattr(torch, dtype), device_map=device)
+        self._setup(model, tokenizer, model_id, device, dtype, chat_template_kwargs)
+
+    @classmethod
+    def from_model(cls, model: Any, tokenizer: Any, *, chat_template_kwargs: dict[str, Any] | None = None,
+                   model_id: str | None = None) -> HFBackend:
+        """Wrap a model already loaded (or modified, e.g. pruned or quantized) without loading it again.
+        model_id defaults to the model's name_or_path; the tokenizer is set to left padding.
+
+        >>> from transformers import AutoModelForCausalLM, AutoTokenizer          # doctest: +SKIP
+        >>> lm = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-3B-Instruct", device_map="cuda:0")  # doctest: +SKIP
+        >>> prune(lm)                                                             # doctest: +SKIP
+        >>> model = HFBackend.from_model(lm, AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct"),
+        ...                              model_id="qwen2.5-3b-pruned")             # doctest: +SKIP
+        >>> report = mk.evaluate_model(model)                                     # doctest: +SKIP
+        """
+        self = cls.__new__(cls)
+        name = model_id or getattr(getattr(model, "config", None), "_name_or_path", None) or type(model).__name__
+        dtype = str(getattr(model, "dtype", "")).removeprefix("torch.")
+        self._setup(model, tokenizer, name, str(getattr(model, "device", "")), dtype, chat_template_kwargs)
+        return self
+
+    def _setup(self, model: Any, tokenizer: Any, model_id: str, device: str, dtype: str,
+               chat_template_kwargs: dict[str, Any] | None) -> None:
         self.model_id = model_id
         self.device = device
         self.dtype = dtype
         self.chat_template_kwargs = chat_template_kwargs or {}
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        self.tokenizer = tokenizer
         self.tokenizer.padding_side = "left"
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_id, dtype=getattr(torch, dtype), device_map=device)
+        self.model = model
         self.model.eval()
         eos = self.model.generation_config.eos_token_id
         self.eos_ids = set(eos if isinstance(eos, list) else [eos]) | {self.tokenizer.eos_token_id}

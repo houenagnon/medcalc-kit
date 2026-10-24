@@ -80,3 +80,24 @@ def test_report_keeps_artifact_categories(tmp_path):
     assert set(report.scores.category) == {"empty"}
     assert set(report.scores.calculator_category) == {"lab test", "physical"}
     assert list(report.general.index) == ["all", "lab test", "physical"]
+
+
+def test_evaluate_model_on_items_already_built(tmp_path):
+    ds = mk.data.demo()
+    items = mk.ProbeSuite({"K": {"mode": "patient"}, "Kg": {"task": "K"}, "E2E": {}}).build(ds)
+    by_prompt = {mk.generation.prompt_key(it["messages"], it["max_new_tokens"]): it
+                 for it in mk.probes.as_items(items)}
+
+    def model(messages, max_new_tokens):                    # right for "K" (patient mode), wrong for "Kg"
+        it = by_prompt[mk.generation.prompt_key(messages, max_new_tokens)]
+        wrong = '{"cases": [{"condition": "always", "formula": "1"}]}'
+        return wrong if it["probe"] == "Kg" else mk.reference_answer(it)
+
+    report = mk.evaluate_model(model, tmp_path, items=items, dataset=ds)
+    assert set(report.items.probe) == {"K", "Kg", "E2E"} and len(report.items) == len(items)
+    assert report.steps.loc["K", "accuracy"] == 1.0                          # views use the label named "K"
+    assert report.by_label.loc["Kg", "accuracy"] == 0.0 and report.by_label.loc["K", "accuracy"] == 1.0
+    assert list(report.general.index) == ["all", "lab test", "physical"]
+    assert list(report.prompt_sensitivity.index) == ["K", "E2E"] and report.prompt_sensitivity.loc["K", "v1"] == 1.0
+    no_ds = mk.evaluate_model(None, tmp_path, items=items, model_id="model")      # rescoring, no categories
+    assert no_ds.general.loc["all", "n"] == 4 and (tmp_path / "by_label.csv").exists()

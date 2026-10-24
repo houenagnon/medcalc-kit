@@ -29,6 +29,7 @@ from medcalc_kit.calculators import CALCULATORS
 from medcalc_kit.data import MedCalcDataset, load, usable_train_pool
 from medcalc_kit.evaluate import score_records, summary
 from medcalc_kit.generation.runner import model_name, run_items
+from medcalc_kit.probes.common import items_frame
 from medcalc_kit.probes.suite import STEP_PROBES, ProbeSuite, write_items
 
 VARIANT_SEP = "@"           # label of a paraphrased item: "<probe>@<variant>", e.g. "K@v2"
@@ -51,6 +52,7 @@ class EvaluationReport:
     consistency:    E2E accuracy when every step succeeds and when a step fails: how faithfully the steps represent
                     the task
     prompt_sensitivity: accuracy of each step with each prompt variant, their mean, standard deviation and range
+    by_label:       accuracy per item label, e.g. custom variants such as "Kg" next to "K"
 
     The views use the default prompts ("v1"); paraphrases (prompt_variants > 1) only enter prompt_sensitivity.
 
@@ -85,8 +87,12 @@ class EvaluationReport:
 
     @property
     def _primary(self) -> pd.DataFrame:
-        """Answers to the default prompts (paraphrased items excluded)."""
-        return self.scores[~self.scores.probe.str.contains(VARIANT_SEP, regex=False)]
+        """One label per task: the label named after the task (e.g. "K"), else, when a task only has custom labels,
+        those that are not paraphrases. Paraphrases ("K@v2") and other custom labels ("Kg") are in by_label."""
+        s = self.scores
+        own = s.probe == s.task
+        tasks_with_own = set(s.task[own])
+        return s[own | (~s.task.isin(tasks_with_own) & ~s.probe.str.contains(VARIANT_SEP, regex=False))]
 
     def __repr__(self) -> str:
         e2e = self._primary[self._primary.task == "E2E"]
@@ -183,8 +189,19 @@ class EvaluationReport:
                              for k, g in rows.items() if len(g)]).set_index("case")
 
     @property
+    def by_label(self) -> pd.DataFrame:
+        """Per item label (custom variants such as "Kg", paraphrases such as "K@v2"): n, well-formed, competence,
+        accuracy."""
+        out = summary(self.scores, by=("probe",), collapse=()).rename(columns={"n_units": "n", "overall": "accuracy"})
+        out.index.name = "label"
+        return out.astype({"n": int})
+
+    @property
     def prompt_sensitivity(self) -> pd.DataFrame:
-        s = self.scores.assign(template=self.scores["template"].fillna("custom"))
+        s = self.scores
+        paraphrase = [p.startswith(t + VARIANT_SEP) for p, t in zip(s.probe, s.task)]
+        s = s[(s.probe == s.task) | pd.Series(paraphrase, index=s.index)]               # task and its paraphrases
+        s = s.assign(template=s["template"].fillna("custom"))
         table = s.pivot_table(index="task", columns="template", values="correct", aggfunc="mean")
         table = table.loc[[p for p in (*STEP_PROBES, "E2E") if p in table.index]]
         variants = list(table.columns)
@@ -204,6 +221,7 @@ class EvaluationReport:
         self.examples.to_csv(out / "examples.csv", index=False)
         self.consistency.to_csv(out / "consistency.csv")
         self.prompt_sensitivity.to_csv(out / "prompt_sensitivity.csv")
+        self.by_label.to_csv(out / "by_label.csv")
         self.scores.drop(columns=["verdict"], errors="ignore").to_csv(out / "scores.csv", index=False)
         return out
 
@@ -217,8 +235,8 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
                    steps: Iterable[str] = STEP_PROBES, k_mode: str = "patient", k_pool: Any = "auto",
                    probe_options: Mapping[str, Mapping[str, Any]] | None = None,
                    prompt_variants: int | Iterable[str] = 1, batch_size: int = 8,
-                   model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None
-                   ) -> EvaluationReport:
+                   model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None,
+                   items: pd.DataFrame | None = None) -> EvaluationReport:
     """Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
     (E, K, S, A on the equation-based calculators). Returns an EvaluationReport.
 
@@ -238,6 +256,9 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
                     paraphrases with the same information and format), or their names. The views use the first one;
                     `report.prompt_sensitivity` compares them. Each variant multiplies the number of generations.
     batch_size, model_id: passed to run_items; scoring: passed to score_records.
+    items:          items already built (e.g. ProbeSuite variants labelled "Kg", or read_items): evaluated as they
+                    are, without building any; split, per_calculator, steps, k_mode, k_pool, probe_options and
+                    prompt_variants then do not apply. Calculator categories come from `dataset` when given.
 
     >>> def always_12(messages, max_new_tokens):
     ...     return '{"answer": 12, "result": 12}'
@@ -246,6 +267,8 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     >>> float(report.general.loc["all", "accuracy"])           # right for the anion gap only
     0.25
     """
+    if items is not None:
+        return _evaluate_items(model, items, output_dir, dataset, batch_size, model_id, scoring)
     ds = dataset if dataset is not None else load()
     examples = ds.filter(split=split)
     if not len(examples):
@@ -283,6 +306,13 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     suite = ProbeSuite(specs, schema=equation if len(equation) else None, k_pool=pool, seed=seed)
     items = suite.build(examples)
 
+    return _evaluate_items(model, items, output_dir, examples, batch_size, model_id, scoring)
+
+
+def _evaluate_items(model: Any, items: pd.DataFrame, output_dir: str | Path | None,
+                    examples: MedCalcDataset | None, batch_size: int, model_id: str | None,
+                    scoring: dict[str, dict[str, Any]] | None) -> EvaluationReport:
+    items = items_frame(items)
     model_id = model_id or (model_name(model) if model is not None else "model")
     out = Path(output_dir) if output_dir is not None else Path("medcalc_eval") / _slug(model_id)
     write_items(items, out / "items")
@@ -292,9 +322,14 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     scores = score_records(generations, items, condition={"model": model_id}, scoring=scoring, details=True)
     if scores.empty:
         raise ValueError(f"no generation to score in {generations}")
-    meta = examples.df.set_index("example_id")[["Category", "Calculator Name"]]
-    scores["calculator_category"] = scores.example_id.map(meta["Category"])
-    scores["calculator_name"] = scores.example_id.map(meta["Calculator Name"])
+    names = dict(zip(items["example_id"], items["calculator_name"])) if "calculator_name" in items else {}
+    category: dict[str, str] = {}
+    if examples is not None:
+        meta = examples.df.set_index("example_id")
+        category = meta["Category"].to_dict()
+        names = {**names, **meta["Calculator Name"].to_dict()}
+    scores["calculator_category"] = scores.example_id.map(category).fillna("") if category else ""
+    scores["calculator_name"] = scores.example_id.map(names)
     report = EvaluationReport(model_id, items, scores, out)
     report.save(out)
     return report

@@ -88,7 +88,7 @@ interruption to resume, or with `model=None` to rescore what was generated.
 ### `benchmark.evaluate_model`
 
 ```python
-def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'U', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None) -> EvaluationReport
+def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'U', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None, items: pd.DataFrame | None = None) -> EvaluationReport
 ```
 
 Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
@@ -110,6 +110,9 @@ prompt_variants: how many wordings of each prompt to use (1 to 3: "v1" is the de
                 paraphrases with the same information and format), or their names. The views use the first one;
                 `report.prompt_sensitivity` compares them. Each variant multiplies the number of generations.
 batch_size, model_id: passed to run_items; scoring: passed to score_records.
+items:          items already built (e.g. ProbeSuite variants labelled "Kg", or read_items): evaluated as they
+                are, without building any; split, per_calculator, steps, k_mode, k_pool, probe_options and
+                prompt_variants then do not apply. Calculator categories come from `dataset` when given.
 
 ```python
 >>> def always_12(messages, max_new_tokens):
@@ -139,6 +142,7 @@ first_failures: for the equation-based examples, how often each step is the firs
 consistency:    E2E accuracy when every step succeeds and when a step fails: how faithfully the steps represent
                 the task
 prompt_sensitivity: accuracy of each step with each prompt variant, their mean, standard deviation and range
+by_label:       accuracy per item label, e.g. custom variants such as "Kg" next to "K"
 
 The views use the default prompts ("v1"); paraphrases (prompt_variants > 1) only enter prompt_sensitivity.
 
@@ -168,7 +172,10 @@ lab test  2          1.0       1.0
 physical  2          1.0       1.0
 ```
 
-#### `.save(self, directory: str | Path | None = None) -> Path`
+**`.by_label`** (property): Per item label (custom variants such as "Kg", paraphrases such as "K@v2"): n, well-formed, competence,
+accuracy.
+
+#### `.save(directory: str | Path | None = None) -> Path`
 
 Write every view as CSV (and the scores) to `directory` (default: the evaluation's output_dir).
 
@@ -242,7 +249,7 @@ MedCalcDataset(4 examples, 4 calculators; demo: 4)
 ['2', '6', '39', '5']
 ```
 
-#### `.filter(self, calculator: str | int | Iterable[str | int] | None = None, category: str | Iterable[str] | None = None, split: str | Iterable[str] | None = None, note_type: str | Iterable[str] | None = None, where: Callable[[pd.DataFrame], Any] | None = None) -> MedCalcDataset`
+#### `.filter(calculator: str | int | Iterable[str | int] | None = None, category: str | Iterable[str] | None = None, split: str | Iterable[str] | None = None, note_type: str | Iterable[str] | None = None, where: Callable[[pd.DataFrame], Any] | None = None) -> MedCalcDataset`
 
 Examples matching every given criterion. Each criterion takes one value or a list: calculator id(s),
 category ("lab test", "physical", "dosage", "risk", "severity", "diagnosis", "date"), split, note type
@@ -260,7 +267,7 @@ category ("lab test", "physical", "dosage", "risk", "severity", "diagnosis", "da
 ['demo:5:1', 'demo:5:2', 'demo:5:3']
 ```
 
-#### `.select(self, example_ids: Iterable[str]) -> MedCalcDataset`
+#### `.select(example_ids: Iterable[str]) -> MedCalcDataset`
 
 The given examples, in the given order.
 
@@ -269,7 +276,7 @@ The given examples, in the given order.
 ['demo:39:1', 'demo:2:1']
 ```
 
-#### `.sample(self, n: int, seed: int = 0, per_calculator: bool = False) -> MedCalcDataset`
+#### `.sample(n: int, seed: int = 0, per_calculator: bool = False) -> MedCalcDataset`
 
 `n` random examples (reproducible with `seed`); per_calculator=True takes up to `n` per calculator.
 Handy to try a model on a small subset first.
@@ -281,7 +288,7 @@ Handy to try a model on a small subset first.
 ['demo:2:1', 'demo:6:1', 'demo:39:1', 'demo:5:1']
 ```
 
-#### `.equation_only(self) -> MedCalcDataset`
+#### `.equation_only() -> MedCalcDataset`
 
 Only the closed-form (equation-based) calculators (see EQUATION_CATEGORIES).
 
@@ -292,7 +299,7 @@ Only the closed-form (equation-based) calculators (see EQUATION_CATEGORIES).
 
 **`.example_ids`** (property): The example ids, in order.
 
-#### `.splits(self) -> pd.DataFrame`
+#### `.splits() -> pd.DataFrame`
 
 Number of examples and of calculators per split.
 
@@ -304,7 +311,7 @@ demo         12            4
 dev           8            4
 ```
 
-#### `.assign_split(self, example_ids: Iterable[str], split: str) -> MedCalcDataset`
+#### `.assign_split(example_ids: Iterable[str], split: str) -> MedCalcDataset`
 
 Move the given examples to `split` (a new or existing split name).
 
@@ -314,7 +321,7 @@ Move the given examples to `split` (a new or existing split name).
 {'demo': 2, 'hard': 2}
 ```
 
-#### `.split_off(self, name: str, fraction: float | None = None, n: int | None = None, *, from_split: str = 'train', per_calculator: bool = True, seed: int = 0, exclude_leaks: bool = False, leak_against: str | Iterable[str] = 'test') -> MedCalcDataset`
+#### `.split_off(name: str, fraction: float | None = None, n: int | None = None, *, from_split: str = 'train', per_calculator: bool = True, seed: int = 0, exclude_leaks: bool = False, leak_against: str | Iterable[str] = 'test') -> MedCalcDataset`
 
 Move part of `from_split` to a new split `name`, at random (reproducible with `seed`), e.g. a dev set
 taken from the training set. Give `fraction` (of each calculator's examples, at least one) or `n` (per
@@ -334,7 +341,7 @@ note of the same patient, see data.quality), so the new split is clean with resp
 {'demo': 17, 'dev': 3}
 ```
 
-#### `.folds(self, k: int, *, from_split: str = 'train', name: str = 'dev', per_calculator: bool = True, seed: int = 0) -> list[MedCalcDataset]`
+#### `.folds(k: int, *, from_split: str = 'train', name: str = 'dev', per_calculator: bool = True, seed: int = 0) -> list[MedCalcDataset]`
 
 k-fold cross-validation over `from_split`: k datasets, the i-th with fold i moved to split `name` and the
 other folds left in `from_split`. Folds are stratified by calculator and disjoint.
@@ -347,7 +354,7 @@ other folds left in `from_split`. Folds are stratified by calculator and disjoin
 20
 ```
 
-#### `.with_splits(self, assignment: str | Path | pd.DataFrame | pd.Series | Mapping[str, str], *, drop_unassigned: bool = False) -> MedCalcDataset`
+#### `.with_splits(assignment: str | Path | pd.DataFrame | pd.Series | Mapping[str, str], *, drop_unassigned: bool = False) -> MedCalcDataset`
 
 Apply a split assignment {example_id: split}: a CSV file written by `save_splits`, a DataFrame with
 `example_id` and `split` columns, a Series or a dict. Examples absent from it keep their split, or are
@@ -361,7 +368,7 @@ dropped with drop_unassigned=True.
 1
 ```
 
-#### `.save_splits(self, path: str | Path) -> Path`
+#### `.save_splits(path: str | Path) -> Path`
 
 Save the split of every example (CSV: example_id, split), to reproduce a split later with
 `with_splits` on a freshly loaded dataset.
@@ -375,7 +382,7 @@ Save the split of every example (CSV: example_id, split), to reproduce a split l
 True
 ```
 
-#### `.calculators(self) -> pd.DataFrame`
+#### `.calculators() -> pd.DataFrame`
 
 One row per calculator: id, name, category and number of examples per split.
 
@@ -441,7 +448,7 @@ Example('demo:2:1', calculator 2 'Creatinine Clearance (Cockcroft-Gault Equation
 [68.6, 'kg']
 ```
 
-#### `.from_row(cls, row: dict[str, Any] | pd.Series) -> Example`
+#### `.from_row(row: dict[str, Any] | pd.Series) -> Example`
 
 From a dataset row (original column names). Only example_id, Calculator ID and entities are required:
 the other columns may be absent in hand-made examples (probes that need them will then be empty).
@@ -453,7 +460,7 @@ the other columns may be absent in hand-made examples (probes that need them wil
 22.86
 ```
 
-#### `.derive(self)`
+#### `.derive()`
 
 Reference computation by the calculator registry (see `medcalc_kit.calculators.derive`).
 
@@ -796,13 +803,13 @@ branches:      the piecewise rules that applied to this patient (empty if none).
 
 **`.env`** (property): Every named value: inputs, coefficients and step results.
 
-#### `.step(self, name: str, expression: str) -> float`
+#### `.step(name: str, expression: str) -> float`
 
 Evaluate `expression` over the values so far, record it as a step and return its value.
 
 **`.answer`** (property): The value of the last step.
 
-#### `.to_frame(self) -> pd.DataFrame`
+#### `.to_frame() -> pd.DataFrame`
 
 One row per quantity, in computation order: inputs, coefficients, then steps (the last is the answer).
 
@@ -1007,7 +1014,7 @@ Traceback (most recent call last):
 ValueError: unknown probe 'X' for label 'X' (available: E, U, K, S, A, E2E)
 ```
 
-#### `.build(self, examples: MedCalcDataset | pd.DataFrame | Iterable[Example | dict[str, Any]], check: bool = True, as_frame: bool = True) -> pd.DataFrame | dict[str, list[Item]]`
+#### `.build(examples: MedCalcDataset | pd.DataFrame | Iterable[Example | dict[str, Any]], check: bool = True, as_frame: bool = True) -> pd.DataFrame | dict[str, list[Item]]`
 
 One row per item (see probes.items_frame), label by label, each in the order of `examples`
 (as_frame=False: {label: [item, ...]}). check=True asserts that the resolved branch formula used by S and A
@@ -2563,15 +2570,29 @@ batches). chat_template_kwargs: e.g. {"enable_thinking": False} for Qwen3. Needs
 >>> mk.run_items(items, "outputs.jsonl", model, batch_size=16)
 ```
 
-#### `.generate_batch(self, batch: list[Messages], max_new_tokens: int) -> list[tuple[str, int, int]]`
+#### `.from_model(model: Any, tokenizer: Any, *, chat_template_kwargs: dict[str, Any] | None = None, model_id: str | None = None) -> HFBackend`
+
+Wrap a model already loaded (or modified, e.g. pruned or quantized) without loading it again.
+model_id defaults to the model's name_or_path; the tokenizer is set to left padding.
+
+```python
+>>> from transformers import AutoModelForCausalLM, AutoTokenizer
+>>> lm = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-3B-Instruct", device_map="cuda:0")
+>>> prune(lm)
+>>> model = HFBackend.from_model(lm, AutoTokenizer.from_pretrained("Qwen/Qwen2.5-3B-Instruct"),
+...                              model_id="qwen2.5-3b-pruned")
+>>> report = mk.evaluate_model(model)
+```
+
+#### `.generate_batch(batch: list[Messages], max_new_tokens: int) -> list[tuple[str, int, int]]`
 
 Greedy answers for several chats: [(text, n_prompt_tokens, n_new_tokens), ...].
 
-#### `.generate(self, messages: Messages, max_new_tokens: int) -> tuple[str, int, int]`
+#### `.generate(messages: Messages, max_new_tokens: int) -> tuple[str, int, int]`
 
 Greedy answer for one chat: (text, n_prompt_tokens, n_new_tokens).
 
-#### `.run_items(self, items, out_path, meta=None, on_record=None, batch_size: int = 1) -> int`
+#### `.run_items(items, out_path, meta=None, on_record=None, batch_size: int = 1) -> int`
 
 `generation.run_items` with this model; decoding settings are added to each record's meta.
 
