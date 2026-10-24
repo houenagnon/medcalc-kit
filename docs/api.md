@@ -2447,7 +2447,8 @@ can be correct) and error type (for an empty, truncated or looping answer: that 
 
 records:    the answers: the output file of `run_items` (path), its DataFrame (`read_records`), or any
             DataFrame / list of dicts with at least `item_id` and `text`. `n_new_tokens` (to detect truncated
-            answers) and `error` are used when present; records with an error are skipped.
+            answers) and `error` are used when present; records with an error are skipped. A record's own
+            `max_new_tokens` (set by truncate_records) replaces the item's budget.
 items:      the items answered (DataFrame, list or {item_id: item}).
 condition:  constant columns to add, e.g. {"model": "qwen2.5-7b"} to compare models later.
 scoring:    score() options per probe label or task, e.g. {"K": {"case_semantics": "first_match"}}.
