@@ -32,8 +32,8 @@ from medcalc_kit.generation.runner import model_name, run_items
 from medcalc_kit.probes.suite import STEP_PROBES, ProbeSuite, write_items
 
 VARIANT_SEP = "@"           # label of a paraphrased item: "<probe>@<variant>", e.g. "K@v2"
-STEP_NAMES = {"E": "extraction", "K": "formula knowledge", "S": "substitution", "A": "arithmetic",
-              "E2E": "end to end"}
+STEP_NAMES = {"E": "extraction", "U": "unit conversion", "K": "formula knowledge", "S": "substitution",
+              "A": "arithmetic", "E2E": "end to end"}
 
 
 @dataclass

@@ -44,7 +44,7 @@ def test_step_probes_only_for_registry_calculators():
         "split": "demo"}])], ignore_index=True))
     items = mk.ProbeSuite().build(ds)
     assert items[items.example_id == "test:13:1"].probe.tolist() == ["E2E"]
-    assert len(items[items.example_id == "demo:2:1"]) == 5
+    assert len(items[items.example_id == "demo:2:1"]) == 6
 
 
 def test_evaluate_model_resumes_and_rescores(tmp_path):
@@ -58,7 +58,7 @@ def test_evaluate_model_resumes_and_rescores(tmp_path):
     report = mk.evaluate_model(model, tmp_path, dataset=ds, split="demo", k_pool=None)
     n = len(calls)
     assert n == len(report.items) and (tmp_path / "generations.jsonl").exists()
-    assert set(report.steps.index) == {"E", "K", "S", "A", "E2E"}
+    assert set(report.steps.index) == {"E", "U", "K", "S", "A", "E2E"}
     assert report.examples.set_index("example_id").loc["demo:39:1", "E2E"]
     assert set(report.first_failures.index) <= {"E", "K", "S", "A", "none"}
     assert (tmp_path / "general.csv").exists() and (tmp_path / "by_calculator.csv").exists()

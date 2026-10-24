@@ -9,7 +9,12 @@ value without being a substitution, and two swapped variables can give the right
 
 Error types: format_invalid, unparsable_expression, unsubstituted_variable (a variable name left in),
 premature_computation (part of it computed: right value, missing literals), missing_or_wrong_value,
-accidental_value_match (right value, wrong structure), structure_or_assignment_error, too_ambiguous.
+accidental_value_match (right value, wrong structure), structure_or_assignment_error, too_ambiguous, and with
+`value_units` unconverted_value (a value copied in the unit it was given in).
+
+Variant "S+U": `build(example, value_units={"scr": "µmol/L"})` gives some values in another unit than the formula's;
+the model converts them while substituting. The reference stays the expression in the formula's units, and the
+numbers of the answer are matched to the variables within DEFAULT_CONVERTED_REL_TOL (rounding of the conversion).
 
     >>> item = build(mk.data.demo()[2])                         # anion gap
     >>> item["reference"]["formula"], item["reference"]["gold_expression"]
@@ -38,16 +43,23 @@ from medcalc_kit.probes.common import (
     branch_formula,
     fmt,
     make_item,
+    presented,
     rel_close,
     render,
     resolve_template,
     symbol_doc,
 )
+from medcalc_kit.units import convert
 
 _MAX_ASSIGNMENTS = 4096
 DEFAULT_MAX_NEW_TOKENS = 768
 DEFAULT_EQUIV_REL_TOL = 1e-6     # numerical equivalence of the symbolic forms
 DEFAULT_VALUE_REL_TOL = 1e-4     # `value_matches` diagnostic only
+DEFAULT_LITERAL_REL_TOL = 1e-9   # matching a number of the answer to a value shown
+DEFAULT_CONVERTED_REL_TOL = 0.01  # the same, for values the model had to convert ("S+U")
+# Added after the values when some are given in another unit (value_units).
+CONVERSION_NOTE = ("Some values are given in a different unit from the one in parentheses: convert them to the unit "
+                   "in parentheses before substituting them.")
 # Placeholders: {calculator_name}, {target} (name of the result), {formula}, {values} (one line per variable).
 DEFAULT_TEMPLATE = (
     "Formula for {calculator_name}:\n{target} = {formula}\n\n"
@@ -74,14 +86,16 @@ TEMPLATES = {
 
 def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE,
           max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT,
-          digits: int = DEFAULT_DIGITS, symbol_docs: dict[str, str] | None = None, label: str = "S") -> Item:
+          digits: int = DEFAULT_DIGITS, symbol_docs: dict[str, str] | None = None, label: str | None = None,
+          value_units: dict[str, str] | None = None) -> Item:
     """The item for one example: the formula of this patient's branch and the values, to be substituted.
 
     template: prompt text with placeholders {calculator_name}, {target}, {formula}, {values}, or the name of a
     variant of TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token
     budget; system_prompt: None for none; digits: significant digits of the values shown (the expected
     expression uses the same values); symbol_docs: {variable: description} overriding common.SYMBOL_DOCS;
-    label: the item's probe name.
+    label: the item's probe name (default "S", or "S+U" with value_units); value_units: {variable: unit} gives
+    those values in another unit (see conversion.VARIABLE_FIELDS and UNIT_TABLE for the supported ones).
 
     >>> item = build(mk.data.demo()[1], system_prompt=None)
     >>> print(item["messages"][0]["content"])
@@ -92,20 +106,46 @@ def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE
     - weight = 70   (body weight (kg))
     - height = 175   (height (cm))
     ...
+
+    With a value in another unit ("S+U"):
+
+    >>> item = build(mk.data.demo()[0], value_units={"scr": "µmol/L"})        # creatinine 0.76 mg/dL
+    >>> item["probe"], [ln for ln in item["messages"][-1]["content"].splitlines() if ln.startswith("- scr")]
+    ('S+U', ['- scr = 67.19 µmol/L   (serum creatinine (mg/dL))'])
+    >>> score(item, mk.reference_answer(item))["correct"], score(item, '{"expression": "%s"}' %
+    ...       item["reference"]["gold_expression"].replace("0.760053", "0.76"))["correct"]
+    (True, True)
     """
+    from medcalc_kit.probes.conversion import DEFAULT_DIGITS as UNIT_DIGITS
+    from medcalc_kit.probes.conversion import UNIT_TABLE, VARIABLE_FIELDS
+
     ex = as_example(example)
     formula, values, d = branch_formula(ex, digits)
     formula_str = expr.to_str(formula)
-    val_lines = "\n".join(f"- {k} = {fmt(v, digits)}   ({symbol_doc(k, ex.entities, symbol_docs)})"
-                          for k, v in values.items())
+    shown = {k: fmt(v, digits) for k, v in values.items()}
+    converted: dict[str, float] = {}
+    for var, unit in (value_units or {}).items():
+        if var not in values or var not in VARIABLE_FIELDS:
+            raise ValueError(f"cannot give {var!r} in another unit: convertible variables of this formula are "
+                             f"{[v for v in values if v in VARIABLE_FIELDS]}")
+        _, analyte, canonical, _ = UNIT_TABLE[VARIABLE_FIELDS[var]]
+        converted[var] = float(fmt(convert(values[var], canonical, unit, analyte), UNIT_DIGITS))  # as on a lab report
+        values[var] = presented(convert(converted[var], unit, canonical, analyte), digits)
+        shown[var] = f"{fmt(converted[var], UNIT_DIGITS)} {unit}"
+    val_lines = "\n".join(f"- {k} = {shown[k]}   ({symbol_doc(k, ex.entities, symbol_docs)})" for k in values)
+    if converted:
+        val_lines += "\n\n" + CONVERSION_NOTE
     name, text = resolve_template(template, TEMPLATES)
     user = render(text, calculator_name=ex.calculator_name, target=d.steps[-1].name, formula=formula_str,
                   values=val_lines)
     gold_expr = expr.to_str(expr.substitute(formula, values))
-    return make_item(ex, label, user, {
-        "formula": formula_str, "values": values, "gold_expression": gold_expr,
-        "gold_value": expr.evaluate(gold_expr),
-    }, max_new_tokens, system_prompt, task="S", template=(name, text))
+    reference = {"formula": formula_str, "values": values, "gold_expression": gold_expr,
+                 "gold_value": expr.evaluate(gold_expr)}
+    if converted:
+        reference.update(value_units=dict(value_units), shown_values=converted,
+                         literal_rel_tol=DEFAULT_CONVERTED_REL_TOL)
+    label = label or ("S+U" if converted else "S")
+    return make_item(ex, label, user, reference, max_new_tokens, system_prompt, task="S", template=(name, text))
 
 
 def _equivalent(a: expr.Node, b: expr.Node, symbols: dict[str, float], seed: int = 0,
@@ -171,9 +211,10 @@ def score_answer(reference: dict[str, Any], text: str, *, equiv_rel_tol: float =
 
     # 2) otherwise map literals back to variables and test symbolic equivalence
     lits = expr.literals(node)
+    lit_tol = reference.get("literal_rel_tol", DEFAULT_LITERAL_REL_TOL)
     options = []
     for lit in lits:
-        cands = [k for k, v in values.items() if rel_close(lit, v, 1e-9) or (lit == 0 and v == 0)]
+        cands = [k for k, v in values.items() if rel_close(lit, v, lit_tol) or (lit == 0 and v == 0)]
         options.append([None] + cands)  # None = keep as constant
     present = {k for opts in options for k in opts if k}
     missing = sorted(set(values) - present)
@@ -193,6 +234,9 @@ def score_answer(reference: dict[str, Any], text: str, *, equiv_rel_tol: float =
         err = None
     elif n_combos > _MAX_ASSIGNMENTS:
         err = "too_ambiguous"
+    elif missing and any(rel_close(lit, reference.get("shown_values", {}).get(k, math.nan), lit_tol)
+                         for k in missing for lit in lits):
+        err = "unconverted_value"
     elif missing:
         err = "premature_computation" if value_matches else "missing_or_wrong_value"
     else:

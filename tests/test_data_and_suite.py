@@ -66,7 +66,7 @@ def test_suite_builds_every_probe_in_order(ds, tmp_path):
     examples = ds.filter(split="train")
     suite = ProbeSuite(k_pool=ds.filter(split="test"), schema=ds)
     built = suite.build(examples)
-    assert built.probe.unique().tolist() == ["E", "K", "S", "A", "E2E"]
+    assert built.probe.unique().tolist() == ["E", "U", "K", "S", "A", "E2E"]
     for _, items in built.groupby("probe", sort=False):
         assert items.example_id.tolist() == examples.example_ids
         assert items.messages.map(lambda m: m[0]["role"] == "system").all()
@@ -77,8 +77,8 @@ def test_suite_builds_every_probe_in_order(ds, tmp_path):
     counts = write_items(built, tmp_path)
     assert counts["S"] == 6
     back = read_items(tmp_path)
-    assert len(back) == 30 and set(back.item_id) == set(built.item_id)
-    assert len(read_items(tmp_path, as_frame=False)) == 30
+    assert len(back) == 36 and set(back.item_id) == set(built.item_id)
+    assert len(read_items(tmp_path, as_frame=False)) == 36
 
 
 def test_gold_answers_score_correct(ds):

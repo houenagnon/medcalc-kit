@@ -3,6 +3,7 @@
 | probe | module        | measures                                                     |
 |-------|---------------|--------------------------------------------------------------|
 | E     | extraction    | finding the input values (with units) in the patient note    |
+| U     | conversion    | converting a patient value to the unit the formula uses      |
 | K     | knowledge     | writing the general formula without the patient's values     |
 | S     | substitution  | plugging the values into a given formula, without computing  |
 | A     | arithmetic    | computing a fully written numerical expression               |
@@ -26,20 +27,21 @@ from typing import Any
 
 import pandas as pd
 
-from medcalc_kit.probes import arithmetic, end_to_end, extraction, knowledge, substitution
+from medcalc_kit.probes import arithmetic, conversion, end_to_end, extraction, knowledge, substitution
 from medcalc_kit.probes.base import Probe
 from medcalc_kit.probes.common import Item, as_item, as_items, items_frame, prompt
 from medcalc_kit.probes.suite import ALL_PROBES, STEP_PROBES, ProbeSuite, read_items, write_items
 
-PROBES: dict[str, Probe] = {m.PROBE.name: m.PROBE for m in (extraction, knowledge, substitution, arithmetic,
-                                                            end_to_end)}
+PROBES: dict[str, Probe] = {m.PROBE.name: m.PROBE for m in (extraction, conversion, knowledge, substitution,
+                                                            arithmetic, end_to_end)}
 
 
 def get(name: str) -> Probe:
     """The probe with this name ("E", "K", "S", "A" or "E2E").
 
     >>> [(p.name, p.title) for p in map(get, ALL_PROBES)]
-    [('E', 'Extraction'), ('K', 'Knowledge'), ('S', 'Substitution'), ('A', 'Arithmetic'), ('E2E', 'End to end')]
+    [('E', 'Extraction'), ('U', 'Unit conversion'), ('K', 'Knowledge'), ('S', 'Substitution'), ('A', 'Arithmetic'),
+     ('E2E', 'End to end')]
     """
     if name not in PROBES:
         raise KeyError(f"unknown probe {name!r}; available: {', '.join(PROBES)}")

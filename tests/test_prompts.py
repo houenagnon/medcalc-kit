@@ -5,13 +5,14 @@ import pandas as pd
 import pytest
 
 import medcalc_kit as mk
-from medcalc_kit.probes import arithmetic, end_to_end, extraction, knowledge, substitution
+from medcalc_kit.probes import arithmetic, conversion, end_to_end, extraction, knowledge, substitution
 from medcalc_kit.probes.common import template_hash
 
 PLACEHOLDER = re.compile(r"\{(\w+)\}")
-MODULE_TEMPLATES = {"E": extraction.TEMPLATES, "K": knowledge.TEMPLATES, "K_patient": knowledge.PATIENT_TEMPLATES,
+MODULE_TEMPLATES = {"E": extraction.TEMPLATES, "U": conversion.TEMPLATES, "K": knowledge.TEMPLATES,
+                    "K_patient": knowledge.PATIENT_TEMPLATES,
                     "S": substitution.TEMPLATES, "A": arithmetic.TEMPLATES, "E2E": end_to_end.TEMPLATES}
-JSON_KEY = {"E": None, "K": '"cases"', "K_patient": '"formula"', "S": '"expression"', "A": '"result"',
+JSON_KEY = {"E": None, "U": '"value"', "K": '"cases"', "K_patient": '"formula"', "S": '"expression"', "A": '"result"',
             "E2E": '"answer"'}
 
 
@@ -28,7 +29,7 @@ def test_variants_share_placeholders_and_answer_format(probe):
 @pytest.mark.parametrize("variant", ["v1", "v2", "v3"])
 def test_reference_answers_are_correct_for_every_variant(variant):
     # K in "general" mode is left out: its reference answer is only right for calculators without branches
-    suite = mk.ProbeSuite({p: {"template": variant} for p in ("E", "S", "A", "E2E")}
+    suite = mk.ProbeSuite({p: {"template": variant} for p in ("E", "U", "S", "A", "E2E")}
                           | {"Kp": {"task": "K", "mode": "patient", "template": variant}})
     items = suite.build(mk.data.demo(3))
     assert (items.template == variant).all()
@@ -53,7 +54,7 @@ def test_evaluate_model_with_prompt_variants(tmp_path):
     def model(messages, max_new_tokens):
         return oracle_by_prompt[mk.generation.prompt_key(messages, max_new_tokens)]
 
-    specs = {"E": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}
+    specs = {"E": {}, "U": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}
     for v in ("v1", "v2", "v3"):
         items = mk.ProbeSuite({k: {**o, "template": v} for k, o in specs.items()}).build(ds)
         for _, it in items.iterrows():

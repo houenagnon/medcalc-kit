@@ -19,13 +19,13 @@ import pandas as pd
 
 from medcalc_kit.calculators import CALCULATORS, derive
 from medcalc_kit.data import Example, MedCalcDataset, as_example
-from medcalc_kit.probes import arithmetic, end_to_end, extraction, knowledge, substitution
+from medcalc_kit.probes import arithmetic, conversion, end_to_end, extraction, knowledge, substitution
 from medcalc_kit.probes.common import Item, as_items, items_frame
 
-ALL_PROBES = ("E", "K", "S", "A", "E2E")
+ALL_PROBES = ("E", "U", "K", "S", "A", "E2E")
 # Probes of the steps of a calculation: they need the registry, so they cover the 33 equation-based calculators.
-STEP_PROBES = ("E", "K", "S", "A")
-_MODULES = {"E": extraction, "K": knowledge, "S": substitution, "A": arithmetic, "E2E": end_to_end}
+STEP_PROBES = ("E", "U", "K", "S", "A")
+_MODULES = {"E": extraction, "U": conversion, "K": knowledge, "S": substitution, "A": arithmetic, "E2E": end_to_end}
 
 
 def _frame(data) -> pd.DataFrame | None:
@@ -51,7 +51,7 @@ class ProbeSuite:
              shuffled per calculator with `seed`. Default: perturbations of the patient at scoring time.
 
     >>> ProbeSuite().probes                                   # every probe, default options
-    ['E', 'K', 'S', 'A', 'E2E']
+    ['E', 'U', 'K', 'S', 'A', 'E2E']
     >>> suite = ProbeSuite({"K": {"mode": "patient"}, "Kg": {"task": "K"}, "A": {"max_new_tokens": 512}})
     >>> items = suite.build(mk.data.demo())
     >>> items.groupby("probe", sort=False).max_new_tokens.first().to_dict()
@@ -59,7 +59,7 @@ class ProbeSuite:
     >>> ProbeSuite(["X"])
     Traceback (most recent call last):
     ...
-    ValueError: unknown probe 'X' for label 'X' (available: E, K, S, A, E2E)
+    ValueError: unknown probe 'X' for label 'X' (available: E, U, K, S, A, E2E)
     """
 
     def __init__(self, probes: Iterable[str] | Mapping[str, Mapping[str, Any]] = ALL_PROBES, *, schema=None,
@@ -112,6 +112,8 @@ class ProbeSuite:
             for ex in exs:
                 if task != "E2E" and ex.calculator_id not in CALCULATORS:
                     continue                                  # step probes need the registry
+                if task == "U" and "field" not in opts and not conversion.convertible_fields(ex):
+                    continue                                  # no value this calculator could take in another unit
                 if task == "E":
                     e_opts = {k: v for k, v in opts.items() if k != "fields"}
                     item = build(ex, opts.get("fields") or fields.get(ex.calculator_id), label=label, **e_opts)

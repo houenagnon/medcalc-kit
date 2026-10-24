@@ -20,7 +20,7 @@ def test_reference_answers_score_correct_on_every_test_example():
     import medcalc_kit as mk
 
     ds = mk.load(REVISION, equation_only=True)
-    items = mk.ProbeSuite({"E": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}},
+    items = mk.ProbeSuite({"E": {}, "U": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}},
                           schema=ds).build(ds.filter(split="test"))
     answers = [mk.reference_answer(it) for _, it in items.iterrows()]
     df = mk.score_records(pd.DataFrame({"item_id": items.item_id, "text": answers}), items, details=True)
@@ -35,7 +35,8 @@ def test_full_benchmark_end_to_end_reference_answers():
     test = mk.load(REVISION).filter(split="test")
     assert len(test) == 1100 and test.df["Calculator ID"].nunique() == 55
     items = mk.ProbeSuite().build(test)
-    assert (items.probe == "E2E").sum() == 1100 and len(items) == 1100 + 4 * 660
+    n_u = sum(bool(mk.probes.conversion.convertible_fields(ex)) for ex in test.equation_only())
+    assert (items.probe == "E2E").sum() == 1100 and len(items) == 1100 + 4 * 660 + n_u
     e2e = items[items.probe == "E2E"]
     answers = pd.DataFrame({"item_id": e2e.item_id, "text": [mk.reference_answer(it) for _, it in e2e.iterrows()]})
     scores = mk.score_records(answers, e2e)
@@ -58,9 +59,9 @@ def test_reference_answers_correct_for_paraphrased_prompts(variant):
     import medcalc_kit as mk
 
     ds = mk.load(REVISION)
-    specs = {"E": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}
+    specs = {"E": {}, "U": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}
     items = mk.ProbeSuite({k: {**o, "template": variant} for k, o in specs.items()}, schema=ds.equation_only()) \
         .build(ds.filter(split="test"))
     answers = pd.DataFrame({"item_id": items.item_id, "text": [mk.reference_answer(it) for _, it in items.iterrows()]})
     scores = mk.score_records(answers, items)
-    assert len(scores) == 1100 + 4 * 660 and scores.correct.all(), scores[~scores.correct].head()
+    assert len(scores) == len(items) and scores.correct.all(), scores[~scores.correct].head()

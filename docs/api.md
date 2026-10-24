@@ -13,8 +13,9 @@ See also the [user guide](guide.md) and the [calculator list](calculators.md).
 - [`medcalc_kit.calculators.verify`](#medcalc_kitcalculatorsverify): [`verify`](#calculatorsverifyverify), [`check_row`](#calculatorsverifycheck_row), [`main`](#calculatorsverifymain)
 - [`medcalc_kit.probes`](#medcalc_kitprobes): [`ProbeSuite`](#probesprobesuite), [`score`](#probesscore), [`reference_answer`](#probesreference_answer), [`prompt`](#probesprompt), [`get`](#probesget), [`PROBES`](#probesprobes), [`ALL_PROBES`](#probesall_probes), [`STEP_PROBES`](#probesstep_probes), [`Probe`](#probesprobe), [`read_items`](#probesread_items), [`write_items`](#probeswrite_items), [`items_frame`](#probesitems_frame), [`as_items`](#probesas_items), [`as_item`](#probesas_item)
 - [`medcalc_kit.probes.extraction`](#medcalc_kitprobesextraction): [`build`](#probesextractionbuild), [`score`](#probesextractionscore), [`score_answer`](#probesextractionscore_answer), [`score_field`](#probesextractionscore_field), [`reference_answer`](#probesextractionreference_answer), [`calculator_fields`](#probesextractioncalculator_fields), [`field_kind`](#probesextractionfield_kind), [`default_field_hint`](#probesextractiondefault_field_hint), [`TEMPLATES`](#probesextractiontemplates), [`DEFAULT_TEMPLATE`](#probesextractiondefault_template), [`KIND_HINT`](#probesextractionkind_hint)
+- [`medcalc_kit.probes.conversion`](#medcalc_kitprobesconversion): [`build`](#probesconversionbuild), [`score`](#probesconversionscore), [`score_answer`](#probesconversionscore_answer), [`reference_answer`](#probesconversionreference_answer), [`convertible_fields`](#probesconversionconvertible_fields), [`UNIT_TABLE`](#probesconversionunit_table), [`VARIABLE_FIELDS`](#probesconversionvariable_fields), [`TEMPLATES`](#probesconversiontemplates), [`DEFAULT_TEMPLATE`](#probesconversiondefault_template)
 - [`medcalc_kit.probes.knowledge`](#medcalc_kitprobesknowledge): [`build`](#probesknowledgebuild), [`score`](#probesknowledgescore), [`score_answer`](#probesknowledgescore_answer), [`reference_answer`](#probesknowledgereference_answer), [`test_points`](#probesknowledgetest_points), [`eval_cases`](#probesknowledgeeval_cases), [`perturb_entities`](#probesknowledgeperturb_entities), [`with_categorical`](#probesknowledgewith_categorical), [`TEMPLATES`](#probesknowledgetemplates), [`PATIENT_TEMPLATES`](#probesknowledgepatient_templates), [`DEFAULT_TEMPLATE`](#probesknowledgedefault_template), [`DEFAULT_PATIENT_TEMPLATE`](#probesknowledgedefault_patient_template)
-- [`medcalc_kit.probes.substitution`](#medcalc_kitprobessubstitution): [`build`](#probessubstitutionbuild), [`score`](#probessubstitutionscore), [`score_answer`](#probessubstitutionscore_answer), [`reference_answer`](#probessubstitutionreference_answer), [`TEMPLATES`](#probessubstitutiontemplates), [`DEFAULT_TEMPLATE`](#probessubstitutiondefault_template)
+- [`medcalc_kit.probes.substitution`](#medcalc_kitprobessubstitution): [`build`](#probessubstitutionbuild), [`score`](#probessubstitutionscore), [`score_answer`](#probessubstitutionscore_answer), [`reference_answer`](#probessubstitutionreference_answer), [`TEMPLATES`](#probessubstitutiontemplates), [`DEFAULT_TEMPLATE`](#probessubstitutiondefault_template), [`CONVERSION_NOTE`](#probessubstitutionconversion_note)
 - [`medcalc_kit.probes.arithmetic`](#medcalc_kitprobesarithmetic): [`build`](#probesarithmeticbuild), [`score`](#probesarithmeticscore), [`score_answer`](#probesarithmeticscore_answer), [`reference_answer`](#probesarithmeticreference_answer), [`TEMPLATES`](#probesarithmetictemplates), [`DEFAULT_TEMPLATE`](#probesarithmeticdefault_template)
 - [`medcalc_kit.probes.end_to_end`](#medcalc_kitprobesend_to_end): [`build`](#probesend_to_endbuild), [`score`](#probesend_to_endscore), [`score_answer`](#probesend_to_endscore_answer), [`reference_answer`](#probesend_to_endreference_answer), [`answer_type`](#probesend_to_endanswer_type), [`parse_date`](#probesend_to_endparse_date), [`parse_weeks_days`](#probesend_to_endparse_weeks_days), [`TEMPLATES`](#probesend_to_endtemplates), [`DEFAULT_TEMPLATE`](#probesend_to_enddefault_template), [`ANSWER_FORMATS`](#probesend_to_endanswer_formats)
 - [`medcalc_kit.probes.common`](#medcalc_kitprobescommon): [`render`](#probescommonrender), [`resolve_template`](#probescommonresolve_template), [`template_hash`](#probescommontemplate_hash), [`fmt`](#probescommonfmt), [`presented`](#probescommonpresented), [`symbol_doc`](#probescommonsymbol_doc), [`SYMBOL_DOCS`](#probescommonsymbol_docs), [`task_question`](#probescommontask_question), [`categorical_context`](#probescommoncategorical_context), [`mme_drugs`](#probescommonmme_drugs), [`inline`](#probescommoninline), [`branch_formula`](#probescommonbranch_formula), [`make_item`](#probescommonmake_item), [`numeric_answer`](#probescommonnumeric_answer), [`rel_close`](#probescommonrel_close), [`DEFAULT_SYSTEM_PROMPT`](#probescommondefault_system_prompt), [`DEFAULT_DIGITS`](#probescommondefault_digits)
@@ -23,7 +24,7 @@ See also the [user guide](guide.md) and the [calculator list](calculators.md).
 - [`medcalc_kit.generation.hf`](#medcalc_kitgenerationhf): [`HFBackend`](#generationhfhfbackend)
 - [`medcalc_kit.evaluate`](#medcalc_kitevaluate): [`score_records`](#evaluatescore_records), [`summary`](#evaluatesummary), [`to_units`](#evaluateto_units), [`read_jsonl`](#evaluateread_jsonl)
 - [`medcalc_kit.expr`](#medcalc_kitexpr): [`evaluate`](#exprevaluate), [`parse`](#exprparse), [`variables`](#exprvariables), [`substitute`](#exprsubstitute), [`replace_vars`](#exprreplace_vars), [`to_str`](#exprto_str), [`canonical`](#exprcanonical), [`evaluate_condition`](#exprevaluate_condition), [`literals`](#exprliterals), [`map_literals`](#exprmap_literals), [`ExprError`](#exprexprerror), [`FUNCTIONS`](#exprfunctions)
-- [`medcalc_kit.units`](#medcalc_kitunits): [`concentration`](#unitsconcentration), [`clean_unit`](#unitsclean_unit), [`weight_kg`](#unitsweight_kg), [`height_cm`](#unitsheight_cm), [`age_years`](#unitsage_years), [`platelets_1e9_per_L`](#unitsplatelets_1e9_per_l), [`insulin_uIU_per_mL`](#unitsinsulin_uiu_per_ml), [`UnitError`](#unitsuniterror), [`MOLAR_MASS`](#unitsmolar_mass)
+- [`medcalc_kit.units`](#medcalc_kitunits): [`convert`](#unitsconvert), [`concentration`](#unitsconcentration), [`clean_unit`](#unitsclean_unit), [`weight_kg`](#unitsweight_kg), [`height_cm`](#unitsheight_cm), [`age_years`](#unitsage_years), [`platelets_1e9_per_L`](#unitsplatelets_1e9_per_l), [`insulin_uIU_per_mL`](#unitsinsulin_uiu_per_ml), [`UnitError`](#unitsuniterror), [`MOLAR_MASS`](#unitsmolar_mass)
 - [`medcalc_kit.parsing`](#medcalc_kitparsing): [`extract_json`](#parsingextract_json), [`to_number`](#parsingto_number)
 
 ---
@@ -86,7 +87,7 @@ interruption to resume, or with `model=None` to rescore what was generated.
 ### `benchmark.evaluate_model`
 
 ```python
-def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None) -> EvaluationReport
+def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'U', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None) -> EvaluationReport
 ```
 
 Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
@@ -951,6 +952,7 @@ Diagnostic probes: one module per competence, each with its prompt (`build`) and
 | probe | module        | measures                                                     |
 |-------|---------------|--------------------------------------------------------------|
 | E     | extraction    | finding the input values (with units) in the patient note    |
+| U     | conversion    | converting a patient value to the unit the formula uses      |
 | K     | knowledge     | writing the general formula without the patient's values     |
 | S     | substitution  | plugging the values into a given formula, without computing  |
 | A     | arithmetic    | computing a fully written numerical expression               |
@@ -973,7 +975,7 @@ True
 ### `probes.ProbeSuite`
 
 ```python
-class ProbeSuite(probes: Iterable[str] | Mapping[str, Mapping[str, Any]] = ('E', 'K', 'S', 'A', 'E2E'), *, schema=None, k_pool=None, seed: int = 0)
+class ProbeSuite(probes: Iterable[str] | Mapping[str, Mapping[str, Any]] = ('E', 'U', 'K', 'S', 'A', 'E2E'), *, schema=None, k_pool=None, seed: int = 0)
 ```
 
 Builds the items of several probes at once, giving each probe the context it needs.
@@ -993,7 +995,7 @@ k_pool:  patients used as K test points (MedCalcDataset or DataFrame, e.g. a lea
 
 ```python
 >>> ProbeSuite().probes                                   # every probe, default options
-['E', 'K', 'S', 'A', 'E2E']
+['E', 'U', 'K', 'S', 'A', 'E2E']
 >>> suite = ProbeSuite({"K": {"mode": "patient"}, "Kg": {"task": "K"}, "A": {"max_new_tokens": 512}})
 >>> items = suite.build(mk.data.demo())
 >>> items.groupby("probe", sort=False).max_new_tokens.first().to_dict()
@@ -1001,7 +1003,7 @@ k_pool:  patients used as K test points (MedCalcDataset or DataFrame, e.g. a lea
 >>> ProbeSuite(["X"])
 Traceback (most recent call last):
 ...
-ValueError: unknown probe 'X' for label 'X' (available: E, K, S, A, E2E)
+ValueError: unknown probe 'X' for label 'X' (available: E, U, K, S, A, E2E)
 ```
 
 #### `.build(self, examples: MedCalcDataset | pd.DataFrame | Iterable[Example | dict[str, Any]], check: bool = True, as_frame: bool = True) -> pd.DataFrame | dict[str, list[Item]]`
@@ -1101,25 +1103,26 @@ The probe with this name ("E", "K", "S", "A" or "E2E").
 
 ```python
 >>> [(p.name, p.title) for p in map(get, ALL_PROBES)]
-[('E', 'Extraction'), ('K', 'Knowledge'), ('S', 'Substitution'), ('A', 'Arithmetic'), ('E2E', 'End to end')]
+[('E', 'Extraction'), ('U', 'Unit conversion'), ('K', 'Knowledge'), ('S', 'Substitution'), ('A', 'Arithmetic'),
+ ('E2E', 'End to end')]
 ```
 
 ### `probes.PROBES`
 
 ```python
-PROBES = {'E': Probe(name='E', title='Extraction', measures='finding the input values (with units) in the patient note', build=<function build>, score=<function score>, reference_answer=<function reference_answer>), 'K': Probe(name='K', title='Knowledge', measures='writing the formula (general, or for this patient) without computing', build=<function build>, score=<function score>, reference_answer=<functi ...
+PROBES = {'E': Probe(name='E', title='Extraction', measures='finding the input values (with units) in the patient note', build=<function build>, score=<function score>, reference_answer=<function reference_answer>), 'U': Probe(name='U', title='Unit conversion', measures='converting a patient value to the unit the formula uses', build=<function build>, score=<function score>, reference_answer=<function refe ...
 ```
 
 ### `probes.ALL_PROBES`
 
 ```python
-ALL_PROBES = ('E', 'K', 'S', 'A', 'E2E')
+ALL_PROBES = ('E', 'U', 'K', 'S', 'A', 'E2E')
 ```
 
 ### `probes.STEP_PROBES`
 
 ```python
-STEP_PROBES = ('E', 'K', 'S', 'A')
+STEP_PROBES = ('E', 'U', 'K', 'S', 'A')
 ```
 
 ### `probes.Probe`
@@ -1393,6 +1396,134 @@ KIND_HINT = {'sex': '"Male" or "Female"', 'race': "the patient's race as written
 
 ---
 
+## `medcalc_kit.probes.conversion`
+
+U — Unit conversion: can the model convert a patient value to the unit the formula uses?
+
+Prompt: one of the patient's values (e.g. serum creatinine), expressed in another plausible unit (e.g. µmol/L), and
+the unit the registry's formula uses (mg/dL). The model converts it. The prompt names the substance but never gives
+the molar mass or the valence: knowing them is part of the competence.
+Answer: {"value": <number>}. Scoring: relative error <= rel_tol (default 1 %).
+Error types: format_invalid, unconverted (the starting number copied back), inverse_factor (the factor applied the
+wrong way: multiplied instead of divided, or the reverse), wrong_value.
+
+The source unit is drawn at random among UNIT_TABLE's alternatives, reproducibly from `seed` and the item id. For a
+monovalent ion (sodium, chloride, bicarbonate), mmol/L and mEq/L are the same number: the probe then checks that the
+model knows it.
+
+```python
+>>> item = build(mk.data.demo()[0], field="creatinine")      # 0.76 mg/dL, given in µmol/L
+>>> item["reference"]["source_value"], item["reference"]["source_unit"], item["reference"]["target_unit"]
+(67.19, 'µmol/L', 'mg/dL')
+>>> score(item, '{"value": 0.76}')["correct"], score(item, '{"value": 67.19}')["error_type"]
+(True, 'unconverted')
+```
+
+### `probes.conversion.build`
+
+```python
+def build(example: Example | dict[str, Any], field: str | None = None, source_unit: str | None = None, *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 768, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = 4, label: str = 'U', seed: int = 0) -> Item
+```
+
+The item for one example: one of the patient's values in another unit, to convert to the formula's unit.
+
+field: the annotated field to convert (default: the first one of convertible_fields); source_unit: the unit it
+is given in (default: drawn among UNIT_TABLE's alternatives from `seed` and the item id); template: prompt text
+with placeholders {quantity}, {value}, {unit}, {target_unit}, or the name of a variant of TEMPLATES ("v1", "v2",
+"v3"); digits: significant digits of the value shown; max_new_tokens: token budget; system_prompt: None for
+none; label: the item's probe name.
+
+```python
+>>> item = build(mk.data.demo()[1])                          # BMI patient: weight 70 kg
+>>> print(item["messages"][-1]["content"].splitlines()[0])
+A patient's body weight is 154.3 lbs.
+>>> item["reference"]["gold_value"]
+69.98...
+>>> build(mk.data.demo()[1], "height", "m")["reference"]["source_value"]
+1.75
+```
+
+### `probes.conversion.score`
+
+```python
+def score(item: Item, text: str, **options: Any) -> dict[str, Any]
+```
+
+Score a model answer for a U item. Options: rel_tol (default 1 %).
+
+```python
+>>> item = build(mk.data.demo()[1], "weight", "lbs")
+>>> score(item, '{"value": 70.5}')["correct"], score(item, '{"value": 70.5}', rel_tol=0.001)["correct"]
+(True, False)
+```
+
+### `probes.conversion.score_answer`
+
+```python
+def score_answer(reference: dict[str, Any], text: str, *, rel_tol: float = 0.01) -> dict[str, Any]
+```
+
+Score a model answer against a U reference ({"source_value", "gold_value", ...}).
+
+```python
+>>> ref = build(mk.data.demo()[0], "creatinine")["reference"]       # 67.19 µmol/L -> 0.76 mg/dL
+>>> [score_answer(ref, f'{{"value": {v}}}')["error_type"] for v in (0.76, 67.19, 5940, 1.2)]
+[None, 'unconverted', 'inverse_factor', 'wrong_value']
+```
+
+### `probes.conversion.reference_answer`
+
+```python
+def reference_answer(item: Item) -> str
+```
+
+A correct answer: the converted value in the expected JSON format.
+
+```python
+>>> reference_answer(build(mk.data.demo()[1], "height", "m"))
+'{"value": 175.0}'
+```
+
+### `probes.conversion.convertible_fields`
+
+```python
+def convertible_fields(example: Example | dict[str, Any]) -> list[str]
+```
+
+The example's annotated fields that the probe can convert (those of UNIT_TABLE), in annotation order.
+
+```python
+>>> convertible_fields(mk.data.demo()[0]), convertible_fields(mk.data.demo()[3])
+(['weight', 'height', 'creatinine'], [])
+```
+
+### `probes.conversion.UNIT_TABLE`
+
+```python
+UNIT_TABLE = {'creatinine': ('serum creatinine', 'creatinine', 'mg/dL', ('µmol/L',)), 'Urine creatinine': ('urine creatinine', 'creatinine', 'mg/dL', ('µmol/L', 'mmol/L')), 'Sodium': ('serum sodium', 'sodium', 'mEq/L', ('mmol/L',)), 'Urine sodium': ('urine sodium', 'sodium', 'mEq/L', ('mmol/L',)), 'Chloride': ('serum chloride', 'chloride', 'mEq/L', ('mmol/L',)), 'Bicarbonate': ('serum bicarbonate', 'bicarbonat ...
+```
+
+### `probes.conversion.VARIABLE_FIELDS`
+
+```python
+VARIABLE_FIELDS = {'scr': 'creatinine', 'scr_raw': 'creatinine', 'ucr': 'Urine creatinine', 'na': 'Sodium', 'na_raw': 'Sodium', 'sna': 'Sodium', 'una': 'Urine sodium', 'cl': 'Chloride', 'hco3': 'Bicarbonate', 'glucose': 'Glucose', 'ca': 'Calcium', 'bun': 'Blood Urea Nitrogen (BUN)', 'albumin': 'Albumin', 'tc': 'Total cholesterol', 'hdl': 'high-density lipoprotein cholesterol', 'tg': 'Triglycerides', 'weight': 'weig ...
+```
+
+### `probes.conversion.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'A patient\'s {quantity} is {value} {unit}.\n\nConvert this value to {target_unit}. Work carefully without any tool, then end your answer with a JSON object of the form {"value": <number in {target_unit} with at least 4 significant digits>}', 'v2': 'Measured {quantity}: {value} {unit}.\n\nExpress this measurement in {target_unit}, without using any tool. Show your work if you wish, then giv ...
+```
+
+### `probes.conversion.DEFAULT_TEMPLATE`
+
+```python
+DEFAULT_TEMPLATE = 'A patient\'s {quantity} is {value} {unit}.\n\nConvert this value to {target_unit}. Work carefully without any tool, then end your answer with a JSON object of the form {"value": <number in {target_unit} with at least 4 significant digits>}'
+```
+
+
+---
+
 ## `medcalc_kit.probes.knowledge`
 
 K — Knowledge: does the model know the calculator's formula?
@@ -1623,7 +1754,12 @@ value without being a substitution, and two swapped variables can give the right
 
 Error types: format_invalid, unparsable_expression, unsubstituted_variable (a variable name left in),
 premature_computation (part of it computed: right value, missing literals), missing_or_wrong_value,
-accidental_value_match (right value, wrong structure), structure_or_assignment_error, too_ambiguous.
+accidental_value_match (right value, wrong structure), structure_or_assignment_error, too_ambiguous, and with
+`value_units` unconverted_value (a value copied in the unit it was given in).
+
+Variant "S+U": `build(example, value_units={"scr": "µmol/L"})` gives some values in another unit than the formula's;
+the model converts them while substituting. The reference stays the expression in the formula's units, and the
+numbers of the answer are matched to the variables within DEFAULT_CONVERTED_REL_TOL (rounding of the conversion).
 
 ```python
 >>> item = build(mk.data.demo()[2])                         # anion gap
@@ -1638,7 +1774,7 @@ accidental_value_match (right value, wrong structure), structure_or_assignment_e
 ### `probes.substitution.build`
 
 ```python
-def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 768, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = 6, symbol_docs: dict[str, str] | None = None, label: str = 'S') -> Item
+def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 768, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = 6, symbol_docs: dict[str, str] | None = None, label: str | None = None, value_units: dict[str, str] | None = None) -> Item
 ```
 
 The item for one example: the formula of this patient's branch and the values, to be substituted.
@@ -1647,7 +1783,8 @@ template: prompt text with placeholders {calculator_name}, {target}, {formula}, 
 variant of TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token
 budget; system_prompt: None for none; digits: significant digits of the values shown (the expected
 expression uses the same values); symbol_docs: {variable: description} overriding common.SYMBOL_DOCS;
-label: the item's probe name.
+label: the item's probe name (default "S", or "S+U" with value_units); value_units: {variable: unit} gives
+those values in another unit (see conversion.VARIABLE_FIELDS and UNIT_TABLE for the supported ones).
 
 ```python
 >>> item = build(mk.data.demo()[1], system_prompt=None)
@@ -1659,6 +1796,17 @@ Variable values:
 - weight = 70   (body weight (kg))
 - height = 175   (height (cm))
 ...
+```
+
+With a value in another unit ("S+U"):
+
+```python
+>>> item = build(mk.data.demo()[0], value_units={"scr": "µmol/L"})        # creatinine 0.76 mg/dL
+>>> item["probe"], [ln for ln in item["messages"][-1]["content"].splitlines() if ln.startswith("- scr")]
+('S+U', ['- scr = 67.19 µmol/L   (serum creatinine (mg/dL))'])
+>>> score(item, mk.reference_answer(item))["correct"], score(item, '{"expression": "%s"}' %
+...       item["reference"]["gold_expression"].replace("0.760053", "0.76"))["correct"]
+(True, True)
 ```
 
 ### `probes.substitution.score`
@@ -1716,6 +1864,12 @@ TEMPLATES = {'v1': 'Formula for {calculator_name}:\n{target} = {formula}\n\nVari
 
 ```python
 DEFAULT_TEMPLATE = 'Formula for {calculator_name}:\n{target} = {formula}\n\nVariable values:\n{values}\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {"expression": "<formula with the values substituted>"}'
+```
+
+### `probes.substitution.CONVERSION_NOTE`
+
+```python
+CONVERSION_NOTE = 'Some values are given in a different unit from the one in parentheses: convert them to the unit in parentheses before substituting them.'
 ```
 
 
@@ -2720,6 +2874,22 @@ reproduces the benchmark's conventions; deviations are documented in medcalc_kit
 1.0
 >>> units.height_cm([5, "ft", 10, "in"])
 177.8
+```
+
+### `units.convert`
+
+```python
+def convert(value: float, unit: str, target: str, analyte: str | None = None) -> float
+```
+
+Convert a value between two units: concentrations of `analyte` (g, mol or Eq per volume, see
+concentration), weights (kg, lbs, g) or heights (cm, m, in, ft).
+
+```python
+>>> round(convert(0.76, "mg/dL", "µmol/L", "creatinine"), 2)
+67.19
+>>> round(convert(154, "lbs", "kg"), 2), round(convert(175, "cm", "in"), 2)
+(69.85, 68.9)
 ```
 
 ### `units.concentration`

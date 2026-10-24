@@ -202,3 +202,26 @@ def insulin_uIU_per_mL(entity: list[Any]) -> float:
     if unit == "ng/mL":
         return value * 24.8
     raise UnitError(f"unknown insulin unit {unit!r}")
+
+
+_WEIGHT_UNITS = {"kg", "lbs", "g"}
+_HEIGHT_UNITS = {"cm", "m", "in", "ft"}
+
+
+def convert(value: float, unit: str, target: str, analyte: str | None = None) -> float:
+    """Convert a value between two units: concentrations of `analyte` (g, mol or Eq per volume, see
+    concentration), weights (kg, lbs, g) or heights (cm, m, in, ft).
+
+    >>> round(convert(0.76, "mg/dL", "µmol/L", "creatinine"), 2)
+    67.19
+    >>> round(convert(154, "lbs", "kg"), 2), round(convert(175, "cm", "in"), 2)
+    (69.85, 68.9)
+    """
+    unit, target = clean_unit(unit), clean_unit(target)
+    if analyte is not None:
+        return concentration(value, unit, analyte, target)
+    for units, to_base in ((_WEIGHT_UNITS, lambda v, u: weight_kg([v, u])),
+                           (_HEIGHT_UNITS, lambda v, u: height_cm([v, u]))):
+        if unit in units and target in units:
+            return to_base(value, unit) / to_base(1.0, target)
+    raise UnitError(f"cannot convert {unit!r} to {target!r}" + ("" if analyte else " without an analyte"))

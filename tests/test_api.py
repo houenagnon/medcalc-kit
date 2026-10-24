@@ -12,7 +12,7 @@ def test_top_level_namespaces():
 
 
 def test_probe_interface():
-    assert list(mk.probes.PROBES) == ["E", "K", "S", "A", "E2E"]
+    assert list(mk.probes.PROBES) == ["E", "U", "K", "S", "A", "E2E"]
     for name, p in mk.probes.PROBES.items():
         assert p.name == name and callable(p.build) and callable(p.score) and p.measures
         assert mk.probes.get(name) is p
