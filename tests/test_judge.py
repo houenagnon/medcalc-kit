@@ -89,3 +89,12 @@ def test_build_refuses_other_probes_and_mismatched_records():
         judge.build(a_item, records()[0], example=DS[0])
     with pytest.raises(ValueError, match="does not answer"):
         judge.build(E2E.iloc[0], {"item_id": "demo:6:1:E2E", "text": "x"}, example=DS[0])
+
+
+def test_judge_reads_latex_quotes_and_states_the_rules():
+    item = judge.build(E2E.iloc[0], records()[0], example=DS[0])
+    answer = 'Wrong formula. {"first_error": "formula", "evidence": "\\\\[ QTc = QT + 0.03 \\\\times (HR - 60) \\\\]"}'
+    assert judge.parse(answer, item)["first_error"] == "formula"
+    for variant in ("v1", "v2", "v3"):
+        text = judge.build(E2E.iloc[0], records()[0], example=DS[0], template=variant)["messages"][-1]["content"]
+        assert judge.JUDGING_RULES in text and "metres instead of centimetres" in text

@@ -13,6 +13,7 @@ import re
 from typing import Any
 
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
+_INVALID_ESCAPE_RE = re.compile(r'\\(?!["\\/bfnrtu])')    # a backslash that does not start a JSON escape
 _NUMBER_RE = re.compile(r"[-+]?(?:\d{1,3}(?:,\d{3})+|\d+)?\.?\d+(?:[eE][-+]?\d+)?")
 
 
@@ -45,13 +46,19 @@ def _balanced_candidates(text: str) -> list[str]:
     return out
 
 
-def extract_json(text: str) -> Any | None:
+def extract_json(text: str, lenient: bool = False) -> Any | None:
     """Return the LAST valid JSON object/array in the text (fenced blocks preferred), else None.
+    lenient=True also reads objects whose strings hold backslashes that are not JSON escapes (LaTeX such as
+    "\\times" quoted by a model); the probes use the strict default.
 
     >>> extract_json('First {"a": 1}, then {"a": 2}')
     {'a': 2}
     >>> extract_json("no JSON here") is None
     True
+    >>> extract_json(r'{"quote": "\\[ x \\]"}') is None                  # \\[ is not a JSON escape
+    True
+    >>> print(extract_json(r'{"quote": "\\[ x \\]"}', lenient=True)["quote"])
+    \\[ x \\]
     """
     if not text:
         return None
@@ -60,6 +67,11 @@ def extract_json(text: str) -> Any | None:
             try:
                 return json.loads(cand.strip())
             except (json.JSONDecodeError, ValueError):
+                if lenient:
+                    try:
+                        return json.loads(_INVALID_ESCAPE_RE.sub(r"\\\\", cand.strip()))
+                    except (json.JSONDecodeError, ValueError):
+                        pass
                 continue
     return None
 

@@ -56,8 +56,15 @@ STEP_DESCRIPTIONS = {
     "arithmetic": "computing the result",
 }
 
-# Placeholders: {note}, {question}, {reference} (the registry's computation), {reasoning}, {categories} (one line per
-# allowed answer), {choices} (the allowed values of first_error).
+# How to judge, in every template ({rules}): a step done differently but correctly is not an error.
+JUDGING_RULES = (
+    "A step done differently from the reference but correctly is NOT an error: other units (for example metres "
+    "instead of centimetres), an equivalent form of the formula, or rounding that changes the result by less than "
+    "1 %. Name a step only if it gives a wrong value. If every step is right, answer \"none\". In the evidence, "
+    "quote plain text (no backslashes or LaTeX)."
+)
+# Placeholders: {note}, {question}, {reference} (the registry's computation), {reasoning}, {rules} (JUDGING_RULES),
+# {categories} (one line per allowed answer), {choices} (the allowed values of first_error).
 DEFAULT_TEMPLATE = (
     "You check the reasoning of an assistant who answered a clinical calculation question.\n\n"
     "Patient note:\n{note}\n\n"
@@ -65,7 +72,7 @@ DEFAULT_TEMPLATE = (
     "Reference computation (correct):\n{reference}\n\n"
     "Reasoning to check:\n<<<\n{reasoning}\n>>>\n\n"
     "Compare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n"
-    "{categories}\n\n"
+    "{categories}\n\n{rules}\n\n"
     "Quote a short passage of the reasoning that shows it. End your answer with a JSON object of the form\n"
     '{"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'
 )
@@ -78,12 +85,12 @@ TEMPLATES = {
            "Question: {question}\n\n"
            "Correct reference computation:\n{reference}\n\n"
            "Assistant's reasoning:\n<<<\n{reasoning}\n>>>\n\n"
-           "Possible answers:\n{categories}\n\n"
+           "Possible answers:\n{categories}\n\n{rules}\n\n"
            "Support your choice with a short quote from the reasoning, then finish with a JSON object "
            '{"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'),
     "v3": ("Note:\n{note}\n\nQuestion: {question}\n\nReference (correct):\n{reference}\n\n"
            "Reasoning:\n<<<\n{reasoning}\n>>>\n\n"
-           "Which step of the reasoning is the first one that is wrong?\n{categories}\n\n"
+           "Which step of the reasoning is the first one that is wrong?\n{categories}\n\n{rules}\n\n"
            'End with {"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'),
 }
 
@@ -170,7 +177,7 @@ def build(item_e2e: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, 
                            ['- "other": an error that fits none of these steps'])
     name, text = resolve_template(template, TEMPLATES)
     user = render(text, note=ex.note, question=ex.question, reference=reference_text(ex, steps, digits),
-                  reasoning=record.get("text") or "", categories=categories,
+                  reasoning=record.get("text") or "", categories=categories, rules=JUDGING_RULES,
                   choices=", ".join(f'"{c}"' for c in choices))
     key = _record_key(record)
     item = make_item(ex, "judge", user, {"judged_item_id": item_e2e["item_id"], "judged_record": key,
@@ -190,7 +197,7 @@ def parse(text: str, item: Item | None = None, steps: Iterable[str] = DEFAULT_ST
     ({'format_valid': False, 'first_error': None, 'evidence': None}, False)
     """
     choices = item["reference"]["choices"] if item is not None else _choices(steps)
-    obj = extract_json(text)
+    obj = extract_json(text, lenient=True)                  # judges quote reasoning, often with LaTeX backslashes
     value = obj.get("first_error") if isinstance(obj, dict) else None
     value = value.strip().lower() if isinstance(value, str) else None
     if value not in choices:
@@ -202,12 +209,13 @@ def parse(text: str, item: Item | None = None, steps: Iterable[str] = DEFAULT_ST
 def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path,
              judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path,
              template: str = "v1", steps: Iterable[str] = DEFAULT_STEPS, batch_size: int = 1,
-             model_id: str | None = None) -> pd.DataFrame:
+             model_id: str | None = None, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS) -> pd.DataFrame:
     """Have a judge annotate the E2E answers of `records`: one row per judged answer, with first_error and
     evidence. Answers to items of calculators outside the registry, to other probes, or with an error are skipped.
 
     judge_model: whatever run_items accepts (HFBackend, a function messages -> text, an API client wrapper);
-    dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items).
+    dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items);
+    max_new_tokens: the judge's token budget (raise it for a judge that reasons at length, e.g. Qwen3's thinking).
     Each row records judge_model_id, template and template_hash, the judged item and the evaluated model_id.
 
     >>> import tempfile, pathlib
@@ -234,7 +242,8 @@ def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Itera
         if item is None or rec.get("error") or item.get("task", item["probe"]) != "E2E" \
                 or item["calculator_id"] not in CALCULATORS:
             continue
-        jitem = build(item, rec, example=examples[item["example_id"]], template=template, steps=steps)
+        jitem = build(item, rec, example=examples[item["example_id"]], template=template, steps=steps,
+                      max_new_tokens=max_new_tokens)
         if jitem["item_id"] not in judged:
             judge_items.append(jitem)
             judged[jitem["item_id"]] = rec

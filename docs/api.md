@@ -2646,14 +2646,15 @@ the condition. The item records template and template_hash, and keeps which answ
 ### `judge.annotate`
 
 ```python
-def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path, judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path, template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), batch_size: int = 1, model_id: str | None = None) -> pd.DataFrame
+def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path, judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path, template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), batch_size: int = 1, model_id: str | None = None, max_new_tokens: int = 1024) -> pd.DataFrame
 ```
 
 Have a judge annotate the E2E answers of `records`: one row per judged answer, with first_error and
 evidence. Answers to items of calculators outside the registry, to other probes, or with an error are skipped.
 
 judge_model: whatever run_items accepts (HFBackend, a function messages -> text, an API client wrapper);
-dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items).
+dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items);
+max_new_tokens: the judge's token budget (raise it for a judge that reasons at length, e.g. Qwen3's thinking).
 Each row records judge_model_id, template and template_hash, the judged item and the evaluated model_id.
 
 ```python
@@ -2736,7 +2737,7 @@ Result: 22.86
 ### `judge.TEMPLATES`
 
 ```python
-TEMPLATES = {'v1': 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\nQuote a short passage of the reasoning th ...
+TEMPLATES = {'v1': 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\n{rules}\n\nQuote a short passage of the r ...
 ```
 
 ### `judge.DEFAULT_STEPS`
@@ -2748,7 +2749,7 @@ DEFAULT_STEPS = ('extraction', 'conversion', 'formula', 'substitution', 'arithme
 ### `judge.DEFAULT_TEMPLATE`
 
 ```python
-DEFAULT_TEMPLATE = 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\nQuote a short passage of the reasoning that show ...
+DEFAULT_TEMPLATE = 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\n{rules}\n\nQuote a short passage of the reasonin ...
 ```
 
 
@@ -3245,16 +3246,22 @@ Deterministic extraction of structured answers from raw model text.
 ### `parsing.extract_json`
 
 ```python
-def extract_json(text: str) -> Any | None
+def extract_json(text: str, lenient: bool = False) -> Any | None
 ```
 
 Return the LAST valid JSON object/array in the text (fenced blocks preferred), else None.
+lenient=True also reads objects whose strings hold backslashes that are not JSON escapes (LaTeX such as
+"\times" quoted by a model); the probes use the strict default.
 
 ```python
 >>> extract_json('First {"a": 1}, then {"a": 2}')
 {'a': 2}
 >>> extract_json("no JSON here") is None
 True
+>>> extract_json(r'{"quote": "\[ x \]"}') is None                  # \[ is not a JSON escape
+True
+>>> print(extract_json(r'{"quote": "\[ x \]"}', lenient=True)["quote"])
+\[ x \]
 ```
 
 ### `parsing.to_number`
