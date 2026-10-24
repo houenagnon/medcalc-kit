@@ -1993,7 +1993,7 @@ Error types: format_invalid (no readable {"answer": ...}), out_of_bounds (number
 ### `probes.end_to_end.build`
 
 ```python
-def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 2048, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, label: str = 'E2E') -> Item
+def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE, max_new_tokens: int = 2048, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, label: str | None = None, provide: tuple[str, ...] = (), digits: int = 6) -> Item
 ```
 
 The item for one example: the patient note and the benchmark question. Works for every calculator of the
@@ -2001,7 +2001,11 @@ benchmark, including the rule-based scores and the date calculators.
 
 template: prompt text with placeholders {note}, {question} and {answer_format}, or the name of a variant of
 TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token budget;
-system_prompt: None for none; label: the item's probe name.
+system_prompt: None for none; label: the item's probe name (default "E2E", or "E2E+V", "E2E+F", "E2E+VF" with
+`provide`).
+provide: an intervention for equation-based calculators: "values" adds the correct values of the variables (in
+the formula's units), "formula" the formula of the patient's branch, both taken from the registry and added
+after the question. Scoring is unchanged; digits: significant digits of the values given.
 
 ```python
 >>> item = build(mk.data.demo()[2], max_new_tokens=512)
@@ -2009,6 +2013,14 @@ system_prompt: None for none; label: the item's probe name.
 (512, 12.0, 'number')
 >>> print(item["messages"][-1]["content"].splitlines()[-1])
 Think step by step, then end your answer with a JSON object of the form {"answer": <number>}
+```
+
+With the formula given (does the model fail for lack of the formula?):
+
+```python
+>>> item = build(mk.data.demo()[1], provide=("formula",))
+>>> item["probe"], [ln for ln in item["messages"][-1]["content"].splitlines() if ln.startswith("bmi =")]
+('E2E+F', ['bmi = weight / (height / 100)^2'])
 ```
 
 ### `probes.end_to_end.score`

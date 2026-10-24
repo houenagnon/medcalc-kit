@@ -21,10 +21,21 @@ import re
 from datetime import date, datetime
 from typing import Any
 
+from medcalc_kit import expr
 from medcalc_kit.data import Example, as_example
 from medcalc_kit.parsing import extract_json, to_number
 from medcalc_kit.probes.base import Probe
-from medcalc_kit.probes.common import DEFAULT_SYSTEM_PROMPT, Item, make_item, render, resolve_template
+from medcalc_kit.probes.common import (
+    DEFAULT_DIGITS,
+    DEFAULT_SYSTEM_PROMPT,
+    Item,
+    branch_formula,
+    fmt,
+    make_item,
+    render,
+    resolve_template,
+    symbol_doc,
+)
 
 DEFAULT_MAX_NEW_TOKENS = 2048
 # Placeholders: {note}, {question}, {answer_format} (depends on the answer type, see ANSWER_FORMATS).
@@ -43,6 +54,10 @@ TEMPLATES = {
     "v3": ("{note}\n\n{question}\n\n"
            'Work it out, then end with {"answer": {answer_format}}'),
 }
+# Interventions (build(provide=...)): information from the registry added after the question, and the label suffix.
+PROVIDE = {"values": "V", "formula": "F"}
+PROVIDED_VALUES_HEADER = "Correct values of the variables, in the units of the formula:"
+PROVIDED_FORMULA_HEADER = "Formula that applies to this patient:"
 ANSWER_FORMATS = {
     "number": "<number>",
     "date": '"<MM/DD/YYYY>"',
@@ -76,9 +91,9 @@ def parse_date(value: Any) -> date | None:
     text = value.strip().rstrip(".")
     candidates = [text] + _DATE_RE.findall(text)
     for cand in candidates:
-        for fmt in _DATE_FORMATS:
+        for date_format in _DATE_FORMATS:
             try:
-                return datetime.strptime(cand.strip(), fmt).date()
+                return datetime.strptime(cand.strip(), date_format).date()
             except ValueError:
                 continue
     return None
@@ -111,27 +126,58 @@ def parse_weeks_days(value: Any) -> tuple[int, int] | None:
 
 def build(example: Example | dict[str, Any], *, template: str = DEFAULT_TEMPLATE,
           max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT,
-          label: str = "E2E") -> Item:
+          label: str | None = None, provide: tuple[str, ...] = (), digits: int = DEFAULT_DIGITS) -> Item:
     """The item for one example: the patient note and the benchmark question. Works for every calculator of the
     benchmark, including the rule-based scores and the date calculators.
 
     template: prompt text with placeholders {note}, {question} and {answer_format}, or the name of a variant of
     TEMPLATES ("v1", "v2", "v3"); max_new_tokens: token budget;
-    system_prompt: None for none; label: the item's probe name.
+    system_prompt: None for none; label: the item's probe name (default "E2E", or "E2E+V", "E2E+F", "E2E+VF" with
+    `provide`).
+    provide: an intervention for equation-based calculators: "values" adds the correct values of the variables (in
+    the formula's units), "formula" the formula of the patient's branch, both taken from the registry and added
+    after the question. Scoring is unchanged; digits: significant digits of the values given.
 
     >>> item = build(mk.data.demo()[2], max_new_tokens=512)
     >>> item["max_new_tokens"], item["reference"]["ground_truth"], item["reference"]["answer_type"]
     (512, 12.0, 'number')
     >>> print(item["messages"][-1]["content"].splitlines()[-1])
     Think step by step, then end your answer with a JSON object of the form {"answer": <number>}
+
+    With the formula given (does the model fail for lack of the formula?):
+
+    >>> item = build(mk.data.demo()[1], provide=("formula",))
+    >>> item["probe"], [ln for ln in item["messages"][-1]["content"].splitlines() if ln.startswith("bmi =")]
+    ('E2E+F', ['bmi = weight / (height / 100)^2'])
     """
     ex = as_example(example)
     kind = answer_type(ex.ground_truth)
+    provide = tuple(provide)
+    unknown = set(provide) - set(PROVIDE)
+    if unknown:
+        raise ValueError(f"provide: {sorted(unknown)} not among {list(PROVIDE)}")
+    question = ex.question
+    if provide:
+        from medcalc_kit.calculators import CALCULATORS
+
+        if ex.calculator_id not in CALCULATORS:
+            raise ValueError(f"provide needs the registry: calculator {ex.calculator_id} is not equation-based")
+        formula, _, d = branch_formula(ex, digits)
+        blocks = []
+        if "values" in provide:
+            blocks.append(PROVIDED_VALUES_HEADER + "\n" + "\n".join(
+                f"- {k} = {fmt(v, digits)} ({symbol_doc(k, ex.entities)})" for k, v in d.inputs.items()))
+        if "formula" in provide:
+            blocks.append(f"{PROVIDED_FORMULA_HEADER}\n{d.steps[-1].name} = {expr.to_str(formula)}")
+        question = question + "\n\n" + "\n\n".join(blocks)
     name, text = resolve_template(template, TEMPLATES)
-    user = render(text, note=ex.note, question=ex.question, answer_format=ANSWER_FORMATS[kind])
-    return make_item(ex, label, user, {"ground_truth": ex.ground_truth, "lower": ex.lower, "upper": ex.upper,
-                                       "answer_type": kind}, max_new_tokens, system_prompt, task="E2E",
-                     template=(name, text))
+    user = render(text, note=ex.note, question=question, answer_format=ANSWER_FORMATS[kind])
+    reference = {"ground_truth": ex.ground_truth, "lower": ex.lower, "upper": ex.upper, "answer_type": kind}
+    if provide:
+        reference["provided"] = [p for p in PROVIDE if p in provide]
+    if label is None:
+        label = "E2E" + ("+" + "".join(PROVIDE[p] for p in PROVIDE if p in provide) if provide else "")
+    return make_item(ex, label, user, reference, max_new_tokens, system_prompt, task="E2E", template=(name, text))
 
 
 def score_answer(reference: dict[str, Any], text: str, *, rel_tol: float | None = None) -> dict[str, Any]:
