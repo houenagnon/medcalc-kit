@@ -22,7 +22,8 @@ See also the [user guide](guide.md) and the [calculator list](calculators.md).
 - [`medcalc_kit.generation`](#medcalc_kitgeneration): [`run_items`](#generationrun_items), [`read_records`](#generationread_records), [`done_item_ids`](#generationdone_item_ids), [`prompt_key`](#generationprompt_key), [`model_name`](#generationmodel_name), [`classify_generation`](#generationclassify_generation), [`is_degenerate`](#generationis_degenerate), [`CATEGORIES`](#generationcategories)
 - [`medcalc_kit.generation.artifacts`](#medcalc_kitgenerationartifacts): [`repeated_ngram_share`](#generationartifactsrepeated_ngram_share), [`max_line_repeats`](#generationartifactsmax_line_repeats)
 - [`medcalc_kit.generation.hf`](#medcalc_kitgenerationhf): [`HFBackend`](#generationhfhfbackend)
-- [`medcalc_kit.evaluate`](#medcalc_kitevaluate): [`score_records`](#evaluatescore_records), [`summary`](#evaluatesummary), [`to_units`](#evaluateto_units), [`read_jsonl`](#evaluateread_jsonl)
+- [`medcalc_kit.judge`](#medcalc_kitjudge): [`build`](#judgebuild), [`annotate`](#judgeannotate), [`parse`](#judgeparse), [`agreement`](#judgeagreement), [`reference_text`](#judgereference_text), [`TEMPLATES`](#judgetemplates), [`DEFAULT_STEPS`](#judgedefault_steps), [`DEFAULT_TEMPLATE`](#judgedefault_template)
+- [`medcalc_kit.evaluate`](#medcalc_kitevaluate): [`score_records`](#evaluatescore_records), [`truncate_records`](#evaluatetruncate_records), [`summary`](#evaluatesummary), [`to_units`](#evaluateto_units), [`read_jsonl`](#evaluateread_jsonl)
 - [`medcalc_kit.expr`](#medcalc_kitexpr): [`evaluate`](#exprevaluate), [`parse`](#exprparse), [`variables`](#exprvariables), [`substitute`](#exprsubstitute), [`replace_vars`](#exprreplace_vars), [`to_str`](#exprto_str), [`canonical`](#exprcanonical), [`evaluate_condition`](#exprevaluate_condition), [`literals`](#exprliterals), [`map_literals`](#exprmap_literals), [`ExprError`](#exprexprerror), [`FUNCTIONS`](#exprfunctions)
 - [`medcalc_kit.units`](#medcalc_kitunits): [`convert`](#unitsconvert), [`concentration`](#unitsconcentration), [`clean_unit`](#unitsclean_unit), [`weight_kg`](#unitsweight_kg), [`height_cm`](#unitsheight_cm), [`age_years`](#unitsage_years), [`platelets_1e9_per_L`](#unitsplatelets_1e9_per_l), [`insulin_uIU_per_mL`](#unitsinsulin_uiu_per_ml), [`UnitError`](#unitsuniterror), [`MOLAR_MASS`](#unitsmolar_mass)
 - [`medcalc_kit.parsing`](#medcalc_kitparsing): [`extract_json`](#parsingextract_json), [`to_number`](#parsingto_number)
@@ -2565,6 +2566,161 @@ Greedy answer for one chat: (text, n_prompt_tokens, n_new_tokens).
 
 ---
 
+## `medcalc_kit.judge`
+
+Optional LLM judge: a SECONDARY analysis of the free reasoning of end-to-end (E2E) answers.
+
+The judge reads the patient note, the question, the full reference computation of the registry (values extracted,
+values in the formula's units, formula of the patient's branch, substituted expression, result) and the reasoning of
+the model evaluated, and names the first step that went wrong. It never replaces the deterministic scoring of the
+final answer (`probes.score`): use it to locate errors, and check it against human labels (`agreement`) first.
+
+The judge is blind: its prompt holds nothing about the condition evaluated (model name, sparsity, method, metadata).
+
+```python
+>>> ex = mk.data.demo()[2]                                  # anion gap
+>>> e2e = mk.probes.end_to_end.build(ex)
+>>> record = {"item_id": e2e["item_id"], "model_id": "model-A", "text": "140 - 104 - 24 = 14. {\"answer\": 14}"}
+>>> item = build(e2e, record, example=ex)
+>>> "model-A" in item["messages"][-1]["content"]
+False
+>>> parse('Checking each step... {"first_error": "arithmetic", "evidence": "= 14"}', item)
+{'format_valid': True, 'first_error': 'arithmetic', 'evidence': '= 14'}
+```
+
+### `judge.build`
+
+```python
+def build(item_e2e: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, example: Example | dict[str, Any], template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), max_new_tokens: int = 1024, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = 6) -> Item
+```
+
+The judge item for one answer (`record`, with its `text`) to an E2E item.
+
+example: the Example of the item (E2E items do not carry the patient's annotated values, which the reference
+needs); template: prompt text with placeholders {note}, {question}, {reference}, {reasoning}, {categories},
+{choices}, or the name of a variant of TEMPLATES; steps: the steps the judge can name (the answer is one of
+"none", these steps, or "other"). The prompt holds no field of the record but its text: the judge is blind to
+the condition. The item records template and template_hash, and keeps which answer it judges in its reference.
+
+```python
+>>> ex = mk.data.demo()[1]
+>>> item = build(mk.probes.end_to_end.build(ex), {"item_id": "demo:6:1:E2E", "text": "BMI = 70/1.75 = 40"},
+...              example=ex)
+>>> item["probe"], item["reference"]["choices"]
+('judge', ['none', 'extraction', 'conversion', 'formula', 'substitution', 'arithmetic', 'other'])
+```
+
+### `judge.annotate`
+
+```python
+def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path, judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path, template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), batch_size: int = 1, model_id: str | None = None) -> pd.DataFrame
+```
+
+Have a judge annotate the E2E answers of `records`: one row per judged answer, with first_error and
+evidence. Answers to items of calculators outside the registry, to other probes, or with an error are skipped.
+
+judge_model: whatever run_items accepts (HFBackend, a function messages -> text, an API client wrapper);
+dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items).
+Each row records judge_model_id, template and template_hash, the judged item and the evaluated model_id.
+
+```python
+>>> import tempfile, pathlib
+>>> ds = mk.data.demo()
+>>> items = mk.ProbeSuite(["E2E"]).build(ds)
+>>> records = [{"item_id": i, "model_id": "m", "text": '{"answer": 1}'} for i in items.item_id]
+>>> def toy_judge(messages, max_new_tokens):
+...     return '{"first_error": "formula", "evidence": "answer 1"}'
+>>> out = pathlib.Path(tempfile.mkdtemp()) / "judge.jsonl"
+>>> notes = annotate(items, records, toy_judge, dataset=ds, out_path=out)
+>>> notes[["judged_item_id", "model_id", "first_error", "judge_model_id"]].head(2)
+  judged_item_id model_id first_error judge_model_id
+0   demo:2:1:E2E        m     formula      toy_judge
+1   demo:6:1:E2E        m     formula      toy_judge
+```
+
+### `judge.parse`
+
+```python
+def parse(text: str, item: Item | None = None, steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic')) -> dict[str, Any]
+```
+
+Read a judge's answer: {"format_valid", "first_error", "evidence"}. An unreadable answer, or a first_error
+outside the allowed choices (those of `item`, else "none", `steps`, "other"), gives first_error None.
+
+```python
+>>> parse('{"first_error": "formula", "evidence": "uses actual weight"}')["first_error"]
+'formula'
+>>> parse('{"first_error": "spelling"}'), parse("I think the formula is wrong.")["format_valid"]
+({'format_valid': False, 'first_error': None, 'evidence': None}, False)
+```
+
+### `judge.agreement`
+
+```python
+def agreement(annotations: pd.DataFrame | Iterable[str | None], human_labels: Mapping[str, str] | pd.Series | pd.DataFrame | Iterable[str], *, key: str = 'judge_item_id') -> dict[str, Any]
+```
+
+Agreement between the judge and human labels of first_error: raw agreement, Cohen's kappa, and the confusion
+matrix (rows: human, columns: judge). Pairs where the judge's answer was unreadable are counted apart
+(`n_unreadable`) and left out.
+
+annotations: the DataFrame of annotate (matched to human_labels on `key`: a dict / Series indexed by it, or a
+DataFrame with `key` and `first_error` columns), or a plain sequence of labels aligned with human_labels.
+
+```python
+>>> judge_labels = ["formula", "formula", "arithmetic", "arithmetic"]
+>>> r = agreement(judge_labels, ["formula", "arithmetic", "arithmetic", "arithmetic"])
+>>> r["n"], r["agreement"], r["kappa"]
+(4, 0.75, 0.5)
+>>> r["confusion"]
+judge       arithmetic  formula
+human
+arithmetic           2        1
+formula              0        1
+```
+
+### `judge.reference_text`
+
+```python
+def reference_text(example: Example | dict[str, Any], steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), digits: int = 6) -> str
+```
+
+The registry's computation for an example, one block per step, as shown to the judge.
+
+```python
+>>> print(reference_text(mk.data.demo()[1]))
+Values in the note:
+- weight: 70 kg
+- height: 175 cm
+Values in the units of the formula:
+- weight = 70 (body weight (kg))
+- height = 175 (height (cm))
+Formula (branch for this patient): bmi = weight / (height / 100)^2
+Substituted expression: 70 / (175 / 100)^2
+Result: 22.86
+```
+
+### `judge.TEMPLATES`
+
+```python
+TEMPLATES = {'v1': 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\nQuote a short passage of the reasoning th ...
+```
+
+### `judge.DEFAULT_STEPS`
+
+```python
+DEFAULT_STEPS = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic')
+```
+
+### `judge.DEFAULT_TEMPLATE`
+
+```python
+DEFAULT_TEMPLATE = 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\nQuote a short passage of the reasoning that show ...
+```
+
+
+---
+
 ## `medcalc_kit.evaluate`
 
 Score model answers and summarise them per probe.
@@ -2619,6 +2775,37 @@ details:    also return the answer `text` and the full `verdict` dict (e.g. per-
 1    m1  demo:2:1:A        empty    False
 >>> score_records(recs, items, details=True).loc[0, "verdict"]["rel_error"] < 1e-4
 True
+```
+
+### `evaluate.truncate_records`
+
+```python
+def truncate_records(records: pd.DataFrame | Iterable[dict[str, Any]] | str | Path, items: pd.DataFrame | Iterable[dict[str, Any]] | dict[str, Any], budgets: dict[str, int], tokenizer: Any) -> pd.DataFrame
+```
+
+Simulate a smaller token budget without generating again: every answer of a probe in `budgets` (label, or
+task) is cut to that many tokens; `text` and `n_new_tokens` are updated and the record gets the new
+`max_new_tokens`, so that score_records classifies a cut answer as truncated. Shorter answers are unchanged.
+Valid for greedy decoding, where the first tokens of an answer do not depend on the budget.
+
+tokenizer: a Hugging Face tokenizer, or any object with encode(text) -> ids and decode(ids) -> text.
+
+```python
+>>> class Words:                                            # a toy tokenizer: one token per word
+...     def encode(self, text): return text.split()
+...     def decode(self, ids): return " ".join(ids)
+>>> items = mk.ProbeSuite(["A"]).build(mk.data.demo())
+>>> recs = [{"item_id": "demo:39:1:A", "text": "step " * 300 + '{"result": 12}', "n_new_tokens": 302},
+...         {"item_id": "demo:6:1:A", "text": '{"result": 22.857}', "n_new_tokens": 2}]
+>>> cut = truncate_records(recs, items, {"A": 150}, Words())
+>>> cut[["item_id", "n_new_tokens", "max_new_tokens"]]
+       item_id  n_new_tokens  max_new_tokens
+0  demo:39:1:A           150             150
+1   demo:6:1:A             2             150
+>>> score_records(cut, items)[["item_id", "category", "correct"]]
+       item_id     category  correct
+0  demo:39:1:A    truncated    False
+1   demo:6:1:A  well_formed     True
 ```
 
 ### `evaluate.summary`

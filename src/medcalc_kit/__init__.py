@@ -14,7 +14,7 @@ The shortcuts below cover a whole evaluation; every module (`data`, `calculators
     >>> mk.score(items.iloc[0], '{"sex": "Female"}')["error_type"]   # score one answer
     'missing'
 """
-from medcalc_kit import benchmark, calculators, data, evaluate, expr, generation, parsing, probes, units
+from medcalc_kit import benchmark, calculators, data, evaluate, expr, generation, judge, parsing, probes, units
 from medcalc_kit.benchmark import EvaluationReport, evaluate_model
 from medcalc_kit.calculators import derive
 from medcalc_kit.data import load
@@ -25,5 +25,5 @@ from medcalc_kit.probes import ProbeSuite, reference_answer, score
 __version__ = "0.4.0"
 
 __all__ = ["EvaluationReport", "ProbeSuite", "benchmark", "calculators", "data", "derive", "evaluate", "evaluate_model",
-           "expr", "generation", "load", "parsing", "probes", "read_records", "reference_answer", "run_items", "score",
-           "score_records", "summary", "units", "__version__"]
+           "expr", "generation", "judge", "load", "parsing", "probes", "read_records", "reference_answer", "run_items",
+           "score", "score_records", "summary", "units", "__version__"]
