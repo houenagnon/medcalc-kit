@@ -1,0 +1,7286 @@
+{
+ "demo:2:1:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n(140 - 51) * (45.5 + 2.3 * (158 / 2.54 - 60) + 0.4 * (68.6 - (45.5 + 2.3 * (158 / 2.54 - 60)))) * 0.85 / (72 * 0.76)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "(140 - 51) * (45.5 + 2.3 * (158 / 2.54 - 60) + 0.4 * (68.6 - (45.5 + 2.3 * (158 / 2.54 - 60)))) * 0.85 / (72 * 0.76)",
+   "gold_value": 79.88391107772712
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9874818347460855
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8497820169530259
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:1:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 51-year-old woman is seen for a medication review. She weighs 68.6 kg and is 158 cm tall. Serum creatinine is 0.76 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"sex\": \"Male\" or \"Female\"\n- \"age\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"creatinine\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "age": "quantity",
+    "creatinine": "quantity",
+    "height": "quantity",
+    "sex": "sex",
+    "weight": "quantity"
+   },
+   "gold": {
+    "age": [
+     51,
+     "years"
+    ],
+    "creatinine": [
+     0.76,
+     "mg/dL"
+    ],
+    "height": [
+     158.0,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     68.6,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "age": "correct",
+     "creatinine": "correct",
+     "height": "correct",
+     "sex": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.2,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "wrong_value",
+     "sex": "correct",
+     "weight": "wrong_value"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:2:1:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 51-year-old woman is seen for a medication review. She weighs 68.6 kg and is 158 cm tall. Serum creatinine is 0.76 mg/dL.\n\nQuestion: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 79.88391107772712,
+   "lower": 75.88971552384076,
+   "upper": 83.87810663161348
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9874818347460855
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:1:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- sex: Female\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 79.88391107772712,
+   "entities": {
+    "age": [
+     51,
+     "years"
+    ],
+    "creatinine": [
+     0.76,
+     "mg/dL"
+    ],
+    "height": [
+     158.0,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     68.6,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:1:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nKnown patient characteristics:\n- sex: Female\n\nPatient values:\n- age = 51\n- weight = 68.6\n- height = 158\n- scr = 0.76\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 79.88391107772712,
+   "branches": [
+    "ibw:female",
+    "bmi>24.9:abw"
+   ],
+   "entities": {
+    "age": [
+     51,
+     "years"
+    ],
+    "creatinine": [
+     0.76,
+     "mg/dL"
+    ],
+    "height": [
+     158.0,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     68.6,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:1:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Creatinine Clearance (Cockcroft-Gault Equation):\ncrcl = (140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)\n\nVariable values:\n- age = 51   (patient age (years))\n- weight = 68.6   (body weight (kg))\n- height = 158   (height (cm))\n- scr = 0.76   (serum creatinine (mg/dL))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "(140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)",
+   "gold_expression": "(140 - 51) * (45.5 + 2.3 * (158 / 2.54 - 60) + 0.4 * (68.6 - (45.5 + 2.3 * (158 / 2.54 - 60)))) * 0.85 / (72 * 0.76)",
+   "gold_value": 79.88391107772712,
+   "values": {
+    "age": 51.0,
+    "height": 158.0,
+    "scr": 0.76,
+    "weight": 68.6
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "age",
+     "height",
+     "scr",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:2:2:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n(140 - 45) * (45.5 + 2.3 * (148.52 / 2.54 - 60) + 0.4 * (64.48 - (45.5 + 2.3 * (148.52 / 2.54 - 60)))) * 0.85 / (72 * 0.71)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "(140 - 45) * (45.5 + 2.3 * (148.52 / 2.54 - 60) + 0.4 * (64.48 - (45.5 + 2.3 * (148.52 / 2.54 - 60)))) * 0.85 / (72 * 0.71)",
+   "gold_value": 80.5351223922714
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9875830573010221
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8509966876122661
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:2:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old woman is seen for a medication review. She weighs 64.48 kg and is 148.52 cm tall. Serum creatinine is 0.71 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"sex\": \"Male\" or \"Female\"\n- \"age\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"creatinine\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "age": "quantity",
+    "creatinine": "quantity",
+    "height": "quantity",
+    "sex": "sex",
+    "weight": "quantity"
+   },
+   "gold": {
+    "age": [
+     45,
+     "years"
+    ],
+    "creatinine": [
+     0.71,
+     "mg/dL"
+    ],
+    "height": [
+     148.52,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     64.48,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "age": "correct",
+     "creatinine": "correct",
+     "height": "correct",
+     "sex": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.2,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "wrong_value",
+     "sex": "correct",
+     "weight": "wrong_value"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:2:2:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old woman is seen for a medication review. She weighs 64.48 kg and is 148.52 cm tall. Serum creatinine is 0.71 mg/dL.\n\nQuestion: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 80.5351223922714,
+   "lower": 76.50836627265782,
+   "upper": 84.56187851188498
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9875830573010221
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:2:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- sex: Female\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 80.5351223922714,
+   "entities": {
+    "age": [
+     45,
+     "years"
+    ],
+    "creatinine": [
+     0.71,
+     "mg/dL"
+    ],
+    "height": [
+     148.52,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     64.48,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:2:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nKnown patient characteristics:\n- sex: Female\n\nPatient values:\n- age = 45\n- weight = 64.48\n- height = 148.52\n- scr = 0.71\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 80.5351223922714,
+   "branches": [
+    "ibw:female",
+    "bmi>24.9:abw"
+   ],
+   "entities": {
+    "age": [
+     45,
+     "years"
+    ],
+    "creatinine": [
+     0.71,
+     "mg/dL"
+    ],
+    "height": [
+     148.52,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     64.48,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:2:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Creatinine Clearance (Cockcroft-Gault Equation):\ncrcl = (140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)\n\nVariable values:\n- age = 45   (patient age (years))\n- weight = 64.48   (body weight (kg))\n- height = 148.52   (height (cm))\n- scr = 0.71   (serum creatinine (mg/dL))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "(140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)",
+   "gold_expression": "(140 - 45) * (45.5 + 2.3 * (148.52 / 2.54 - 60) + 0.4 * (64.48 - (45.5 + 2.3 * (148.52 / 2.54 - 60)))) * 0.85 / (72 * 0.71)",
+   "gold_value": 80.5351223922714,
+   "values": {
+    "age": 45.0,
+    "height": 148.52,
+    "scr": 0.71,
+    "weight": 64.48
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "age",
+     "height",
+     "scr",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:2:3:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n(140 - 60) * (45.5 + 2.3 * (172.22 / 2.54 - 60) + 0.4 * (74.77 - (45.5 + 2.3 * (172.22 / 2.54 - 60)))) * 0.85 / (72 * 0.83)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "(140 - 60) * (45.5 + 2.3 * (172.22 / 2.54 - 60) + 0.4 * (74.77 - (45.5 + 2.3 * (172.22 / 2.54 - 60)))) * 0.85 / (72 * 0.83)",
+   "gold_value": 77.34925634295713
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9870716274818969
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8448595297827626
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:3:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 60-year-old woman is seen for a medication review. She weighs 74.77 kg and is 172.22 cm tall. Serum creatinine is 0.83 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"sex\": \"Male\" or \"Female\"\n- \"age\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"creatinine\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "age": "quantity",
+    "creatinine": "quantity",
+    "height": "quantity",
+    "sex": "sex",
+    "weight": "quantity"
+   },
+   "gold": {
+    "age": [
+     60,
+     "years"
+    ],
+    "creatinine": [
+     0.83,
+     "mg/dL"
+    ],
+    "height": [
+     172.22,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     74.77,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "age": "correct",
+     "creatinine": "correct",
+     "height": "correct",
+     "sex": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "missing",
+     "sex": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.2,
+    "fields": {
+     "age": "missing",
+     "creatinine": "missing",
+     "height": "wrong_value",
+     "sex": "correct",
+     "weight": "wrong_value"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:2:3:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 60-year-old woman is seen for a medication review. She weighs 74.77 kg and is 172.22 cm tall. Serum creatinine is 0.83 mg/dL.\n\nQuestion: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 77.34925634295713,
+   "lower": 73.48179352580928,
+   "upper": 81.21671916010499
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9870716274818969
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:2:3:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- sex: Female\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 77.34925634295713,
+   "entities": {
+    "age": [
+     60,
+     "years"
+    ],
+    "creatinine": [
+     0.83,
+     "mg/dL"
+    ],
+    "height": [
+     172.22,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     74.77,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:3:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's Creatinine Clearance using the Cockroft-Gault Equation in terms of mL/min? You should use the patient's adjusted body weight in kg instead of the patient's actual body weight if the patient is overweight or obese based on their BMI. If the patient's BMI's normal, set their adjusted body weight to the minimum of the ideal body and actual weight. If the patient is underweight, please set their adjusted body weight to their actual body weight.\n\nKnown patient characteristics:\n- sex: Female\n\nPatient values:\n- age = 60\n- weight = 74.77\n- height = 172.22\n- scr = 0.83\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- age: patient age (years)\n- weight: body weight (kg)\n- height: height (cm)\n- scr: serum creatinine (mg/dL)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 77.34925634295713,
+   "branches": [
+    "ibw:female",
+    "bmi>24.9:abw"
+   ],
+   "entities": {
+    "age": [
+     60,
+     "years"
+    ],
+    "creatinine": [
+     0.83,
+     "mg/dL"
+    ],
+    "height": [
+     172.22,
+     "cm"
+    ],
+    "sex": "Female",
+    "weight": [
+     74.77,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "age",
+    "weight",
+    "height",
+    "scr"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:2:3:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Creatinine Clearance (Cockcroft-Gault Equation):\ncrcl = (140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)\n\nVariable values:\n- age = 60   (patient age (years))\n- weight = 74.77   (body weight (kg))\n- height = 172.22   (height (cm))\n- scr = 0.83   (serum creatinine (mg/dL))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "(140 - age) * (45.5 + 2.3 * (height / 2.54 - 60) + 0.4 * (weight - (45.5 + 2.3 * (height / 2.54 - 60)))) * 0.85 / (72 * scr)",
+   "gold_expression": "(140 - 60) * (45.5 + 2.3 * (172.22 / 2.54 - 60) + 0.4 * (74.77 - (45.5 + 2.3 * (172.22 / 2.54 - 60)))) * 0.85 / (72 * 0.83)",
+   "gold_value": 77.34925634295713,
+   "values": {
+    "age": 60.0,
+    "height": 172.22,
+    "scr": 0.83,
+    "weight": 74.77
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "age",
+     "height",
+     "scr",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:39:1:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n140 - (104 + 24)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "140 - (104 + 24)",
+   "gold_value": 12.0
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9166666666666666
+   },
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:1:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 140 mEq/L, potassium 3.9 mEq/L, chloride 104 mEq/L, bicarbonate 24 mEq/L, glucose 98 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Sodium\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Chloride\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Bicarbonate\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Bicarbonate": "quantity",
+    "Chloride": "quantity",
+    "Sodium": "quantity"
+   },
+   "gold": {
+    "Bicarbonate": [
+     24.0,
+     "mEq/L"
+    ],
+    "Chloride": [
+     104.0,
+     "mEq/L"
+    ],
+    "Sodium": [
+     140.0,
+     "mEq/L"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Bicarbonate": "correct",
+     "Chloride": "correct",
+     "Sodium": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:39:1:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 140 mEq/L, potassium 3.9 mEq/L, chloride 104 mEq/L, bicarbonate 24 mEq/L, glucose 98 mg/dL.\n\nQuestion: What is the patient's anion gap in terms of mEq/L?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 12.0,
+   "lower": 11.399999999999999,
+   "upper": 12.600000000000001
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9166666666666666
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:1:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 12.0,
+   "entities": {
+    "Bicarbonate": [
+     24.0,
+     "mEq/L"
+    ],
+    "Chloride": [
+     104.0,
+     "mEq/L"
+    ],
+    "Sodium": [
+     140.0,
+     "mEq/L"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 17,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:1:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- na = 140\n- cl = 104\n- hco3 = 24\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 12.0,
+   "branches": [],
+   "entities": {
+    "Bicarbonate": [
+     24.0,
+     "mEq/L"
+    ],
+    "Chloride": [
+     104.0,
+     "mEq/L"
+    ],
+    "Sodium": [
+     140.0,
+     "mEq/L"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 14,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 14,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:1:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Anion Gap:\nag = na - (cl + hco3)\n\nVariable values:\n- na = 140   (serum sodium (mEq/L))\n- cl = 104   (serum chloride (mEq/L))\n- hco3 = 24   (serum bicarbonate (mEq/L))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "na - (cl + hco3)",
+   "gold_expression": "140 - (104 + 24)",
+   "gold_value": 12.0,
+   "values": {
+    "cl": 104.0,
+    "hco3": 24.0,
+    "na": 140.0
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:39:2:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n131.6 - (97.76 + 22.56)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "131.6 - (97.76 + 22.56)",
+   "gold_value": 11.279999999999987
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9113475177304964
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.06382978723404378
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:2:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 131.6 mEq/L, potassium 3.9 mEq/L, chloride 97.76 mEq/L, bicarbonate 22.56 mEq/L, glucose 98 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Sodium\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Chloride\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Bicarbonate\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Bicarbonate": "quantity",
+    "Chloride": "quantity",
+    "Sodium": "quantity"
+   },
+   "gold": {
+    "Bicarbonate": [
+     22.56,
+     "mEq/L"
+    ],
+    "Chloride": [
+     97.76,
+     "mEq/L"
+    ],
+    "Sodium": [
+     131.6,
+     "mEq/L"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Bicarbonate": "correct",
+     "Chloride": "correct",
+     "Sodium": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:39:2:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 131.6 mEq/L, potassium 3.9 mEq/L, chloride 97.76 mEq/L, bicarbonate 22.56 mEq/L, glucose 98 mg/dL.\n\nQuestion: What is the patient's anion gap in terms of mEq/L?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 11.279999999999987,
+   "lower": 10.715999999999987,
+   "upper": 11.843999999999987
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9113475177304964
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:2:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 11.279999999999987,
+   "entities": {
+    "Bicarbonate": [
+     22.56,
+     "mEq/L"
+    ],
+    "Chloride": [
+     97.76,
+     "mEq/L"
+    ],
+    "Sodium": [
+     131.6,
+     "mEq/L"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 17,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:2:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- na = 131.6\n- cl = 97.76\n- hco3 = 22.56\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 11.279999999999987,
+   "branches": [],
+   "entities": {
+    "Bicarbonate": [
+     22.56,
+     "mEq/L"
+    ],
+    "Chloride": [
+     97.76,
+     "mEq/L"
+    ],
+    "Sodium": [
+     131.6,
+     "mEq/L"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 13,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 13,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:2:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Anion Gap:\nag = na - (cl + hco3)\n\nVariable values:\n- na = 131.6   (serum sodium (mEq/L))\n- cl = 97.76   (serum chloride (mEq/L))\n- hco3 = 22.56   (serum bicarbonate (mEq/L))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "na - (cl + hco3)",
+   "gold_expression": "131.6 - (97.76 + 22.56)",
+   "gold_value": 11.279999999999987,
+   "values": {
+    "cl": 97.76,
+    "hco3": 22.56,
+    "na": 131.6
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:39:3:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n152.6 - (113.36 + 26.16)\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "152.6 - (113.36 + 26.16)",
+   "gold_value": 13.079999999999984
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9235474006116207
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.08256880733944842
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:3:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 152.6 mEq/L, potassium 3.9 mEq/L, chloride 113.36 mEq/L, bicarbonate 26.16 mEq/L, glucose 98 mg/dL.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Sodium\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Chloride\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Bicarbonate\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Bicarbonate": "quantity",
+    "Chloride": "quantity",
+    "Sodium": "quantity"
+   },
+   "gold": {
+    "Bicarbonate": [
+     26.16,
+     "mEq/L"
+    ],
+    "Chloride": [
+     113.36,
+     "mEq/L"
+    ],
+    "Sodium": [
+     152.6,
+     "mEq/L"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Bicarbonate": "correct",
+     "Chloride": "correct",
+     "Sodium": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Bicarbonate": "missing",
+     "Chloride": "missing",
+     "Sodium": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:39:3:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 45-year-old man presents with vomiting. Labs: sodium 152.6 mEq/L, potassium 3.9 mEq/L, chloride 113.36 mEq/L, bicarbonate 26.16 mEq/L, glucose 98 mg/dL.\n\nQuestion: What is the patient's anion gap in terms of mEq/L?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 13.079999999999984,
+   "lower": 12.425999999999984,
+   "upper": 13.733999999999984
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9235474006116207
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:39:3:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 13.079999999999984,
+   "entities": {
+    "Bicarbonate": [
+     26.16,
+     "mEq/L"
+    ],
+    "Chloride": [
+     113.36,
+     "mEq/L"
+    ],
+    "Sodium": [
+     152.6,
+     "mEq/L"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 22,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:3:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's anion gap in terms of mEq/L?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- na = 152.6\n- cl = 113.36\n- hco3 = 26.16\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- na: serum sodium (mEq/L)\n- cl: serum chloride (mEq/L)\n- hco3: serum bicarbonate (mEq/L)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 13.079999999999984,
+   "branches": [],
+   "entities": {
+    "Bicarbonate": [
+     26.16,
+     "mEq/L"
+    ],
+    "Chloride": [
+     113.36,
+     "mEq/L"
+    ],
+    "Sodium": [
+     152.6,
+     "mEq/L"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "na",
+    "cl",
+    "hco3"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 16,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 16,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:39:3:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Anion Gap:\nag = na - (cl + hco3)\n\nVariable values:\n- na = 152.6   (serum sodium (mEq/L))\n- cl = 113.36   (serum chloride (mEq/L))\n- hco3 = 26.16   (serum bicarbonate (mEq/L))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "na - (cl + hco3)",
+   "gold_expression": "152.6 - (113.36 + 26.16)",
+   "gold_value": 13.079999999999984,
+   "values": {
+    "cl": 113.36,
+    "hco3": 26.16,
+    "na": 152.6
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:5:1:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n150 / 3 + 2 * 90 / 3\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "150 / 3 + 2 * 90 / 3",
+   "gold_value": 110.0
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.990909090909091
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8909090909090909
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:1:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 150/90 mm Hg, heart rate 72 beats per minute.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Systolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Diastolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Diastolic Blood Pressure": "quantity",
+    "Systolic Blood Pressure": "quantity"
+   },
+   "gold": {
+    "Diastolic Blood Pressure": [
+     90.0,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     150.0,
+     "mm Hg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Diastolic Blood Pressure": "correct",
+     "Systolic Blood Pressure": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:5:1:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 150/90 mm Hg, heart rate 72 beats per minute.\n\nQuestion: What is patient's mean arterial pressure in mm Hg?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 110.0,
+   "lower": 104.5,
+   "upper": 115.5
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.990909090909091
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:1:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 110.0,
+   "entities": {
+    "Diastolic Blood Pressure": [
+     90.0,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     150.0,
+     "mm Hg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:1:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- sbp = 150\n- dbp = 90\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 110.0,
+   "branches": [],
+   "entities": {
+    "Diastolic Blood Pressure": [
+     90.0,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     150.0,
+     "mm Hg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:1:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Mean Arterial Pressure (MAP):\nmap = sbp / 3 + 2 * dbp / 3\n\nVariable values:\n- sbp = 150   (systolic blood pressure (mm Hg))\n- dbp = 90   (diastolic blood pressure (mm Hg))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "sbp / 3 + 2 * dbp / 3",
+   "gold_expression": "150 / 3 + 2 * 90 / 3",
+   "gold_value": 110.0,
+   "values": {
+    "dbp": 90.0,
+    "sbp": 150.0
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "dbp",
+     "sbp"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:5:2:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n141 / 3 + 2 * 84.6 / 3\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "141 / 3 + 2 * 84.6 / 3",
+   "gold_value": 103.4
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9903288201160542
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8839458413926499
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:2:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 141/84.6 mm Hg, heart rate 72 beats per minute.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Systolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Diastolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Diastolic Blood Pressure": "quantity",
+    "Systolic Blood Pressure": "quantity"
+   },
+   "gold": {
+    "Diastolic Blood Pressure": [
+     84.6,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     141.0,
+     "mm Hg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Diastolic Blood Pressure": "correct",
+     "Systolic Blood Pressure": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:5:2:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 141/84.6 mm Hg, heart rate 72 beats per minute.\n\nQuestion: What is patient's mean arterial pressure in mm Hg?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 103.4,
+   "lower": 98.23,
+   "upper": 108.57000000000001
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9903288201160542
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:2:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 103.4,
+   "entities": {
+    "Diastolic Blood Pressure": [
+     84.6,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     141.0,
+     "mm Hg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:2:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- sbp = 141\n- dbp = 84.6\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 103.4,
+   "branches": [],
+   "entities": {
+    "Diastolic Blood Pressure": [
+     84.6,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     141.0,
+     "mm Hg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:2:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Mean Arterial Pressure (MAP):\nmap = sbp / 3 + 2 * dbp / 3\n\nVariable values:\n- sbp = 141   (systolic blood pressure (mm Hg))\n- dbp = 84.6   (diastolic blood pressure (mm Hg))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "sbp / 3 + 2 * dbp / 3",
+   "gold_expression": "141 / 3 + 2 * 84.6 / 3",
+   "gold_value": 103.4,
+   "values": {
+    "dbp": 84.6,
+    "sbp": 141.0
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "dbp",
+     "sbp"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:5:3:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n163.5 / 3 + 2 * 98.1 / 3\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "163.5 / 3 + 2 * 98.1 / 3",
+   "gold_value": 119.89999999999999
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9916597164303587
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.8999165971643036
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:3:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 163.5/98.1 mm Hg, heart rate 72 beats per minute.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"Systolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"Diastolic Blood Pressure\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "Diastolic Blood Pressure": "quantity",
+    "Systolic Blood Pressure": "quantity"
+   },
+   "gold": {
+    "Diastolic Blood Pressure": [
+     98.1,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     163.5,
+     "mm Hg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "Diastolic Blood Pressure": "correct",
+     "Systolic Blood Pressure": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "Diastolic Blood Pressure": "missing",
+     "Systolic Blood Pressure": "missing"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:5:3:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 62-year-old woman with hypertension. Blood pressure 163.5/98.1 mm Hg, heart rate 72 beats per minute.\n\nQuestion: What is patient's mean arterial pressure in mm Hg?\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 119.89999999999999,
+   "lower": 113.90499999999999,
+   "upper": 125.895
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9916597164303587
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:5:3:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 119.89999999999999,
+   "entities": {
+    "Diastolic Blood Pressure": [
+     98.1,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     163.5,
+     "mm Hg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:3:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is patient's mean arterial pressure in mm Hg?\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- sbp = 163.5\n- dbp = 98.1\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- sbp: systolic blood pressure (mm Hg)\n- dbp: diastolic blood pressure (mm Hg)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 119.89999999999999,
+   "branches": [],
+   "entities": {
+    "Diastolic Blood Pressure": [
+     98.1,
+     "mm Hg"
+    ],
+    "Systolic Blood Pressure": [
+     163.5,
+     "mm Hg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "sbp",
+    "dbp"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "height",
+     "weight"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:5:3:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Mean Arterial Pressure (MAP):\nmap = sbp / 3 + 2 * dbp / 3\n\nVariable values:\n- sbp = 163.5   (systolic blood pressure (mm Hg))\n- dbp = 98.1   (diastolic blood pressure (mm Hg))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "sbp / 3 + 2 * dbp / 3",
+   "gold_expression": "163.5 / 3 + 2 * 98.1 / 3",
+   "gold_value": 119.89999999999999,
+   "values": {
+    "dbp": 98.1,
+    "sbp": 163.5
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "dbp",
+     "sbp"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:6:1:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n70 / (175 / 100)^2\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "70 / (175 / 100)^2",
+   "gold_value": 22.857142857142858
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.95625
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.47500000000000003
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:1:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 175 cm, weight 70 kg. Blood pressure 118/76 mm Hg.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "height": "quantity",
+    "weight": "quantity"
+   },
+   "gold": {
+    "height": [
+     175.0,
+     "cm"
+    ],
+    "weight": [
+     70.0,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "height": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "height": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:6:1:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 175 cm, weight 70 kg. Blood pressure 118/76 mm Hg.\n\nQuestion: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 22.857142857142858,
+   "lower": 21.714285714285715,
+   "upper": 24.0
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.95625
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:1:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 22.857142857142858,
+   "entities": {
+    "height": [
+     175.0,
+     "cm"
+    ],
+    "weight": [
+     70.0,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:1:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- weight = 70\n- height = 175\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 22.857142857142858,
+   "branches": [],
+   "entities": {
+    "height": [
+     175.0,
+     "cm"
+    ],
+    "weight": [
+     70.0,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:1:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Body Mass Index (BMI):\nbmi = weight / (height / 100)^2\n\nVariable values:\n- weight = 70   (body weight (kg))\n- height = 175   (height (cm))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "weight / (height / 100)^2",
+   "gold_expression": "70 / (175 / 100)^2",
+   "gold_value": 22.857142857142858,
+   "values": {
+    "height": 175.0,
+    "weight": 70.0
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "height",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:6:2:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n65.8 / (164.5 / 100)^2\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "65.8 / (164.5 / 100)^2",
+   "gold_value": 24.316109422492403
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.958875
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.5065000000000001
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:2:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 164.5 cm, weight 65.8 kg. Blood pressure 118/76 mm Hg.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "height": "quantity",
+    "weight": "quantity"
+   },
+   "gold": {
+    "height": [
+     164.5,
+     "cm"
+    ],
+    "weight": [
+     65.8,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "height": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_value",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "wrong_value",
+     "weight": "wrong_value"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:6:2:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 164.5 cm, weight 65.8 kg. Blood pressure 118/76 mm Hg.\n\nQuestion: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 24.316109422492403,
+   "lower": 23.10030395136778,
+   "upper": 25.531914893617024
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.958875
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:2:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 24.316109422492403,
+   "entities": {
+    "height": [
+     164.5,
+     "cm"
+    ],
+    "weight": [
+     65.8,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:2:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- weight = 65.8\n- height = 164.5\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 24.316109422492403,
+   "branches": [],
+   "entities": {
+    "height": [
+     164.5,
+     "cm"
+    ],
+    "weight": [
+     65.8,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:2:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Body Mass Index (BMI):\nbmi = weight / (height / 100)^2\n\nVariable values:\n- weight = 65.8   (body weight (kg))\n- height = 164.5   (height (cm))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "weight / (height / 100)^2",
+   "gold_expression": "65.8 / (164.5 / 100)^2",
+   "gold_value": 24.316109422492403,
+   "values": {
+    "height": 164.5,
+    "weight": 65.8
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "height",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ },
+ "demo:6:3:A": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Compute the value of the following expression (ln is the natural logarithm, log10 the base-10 logarithm, round(x, n) rounds x to n decimals, ^ is exponentiation):\n\n76.3 / (190.75 / 100)^2\n\nWork carefully without any tool. End your answer with a JSON object of the form {\"result\": <number with at least 4 significant digits>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "expression": "76.3 / (190.75 / 100)^2",
+   "gold_value": 20.969855832241155
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "correct_strict": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.9523125
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "arithmetic_error",
+    "format_valid": true,
+    "rel_error": 0.42775
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "correct_strict": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:3:E": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 190.75 cm, weight 76.3 kg. Blood pressure 118/76 mm Hg.\n\nTask: extract the following information about the patient from the note. Use the values at the patient's first admission, before any treatment. Report each numeric value exactly as written in the note together with its unit (do not convert units). Use null if a value is not mentioned.\n\nFields:\n- \"weight\": {\"value\": <number>, \"unit\": <unit as written>}\n- \"height\": {\"value\": <number>, \"unit\": <unit as written>}\n\nYou may think briefly, then end your answer with a single JSON object containing exactly these fields.",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "fields": {
+    "height": "quantity",
+    "weight": "quantity"
+   },
+   "gold": {
+    "height": [
+     190.75,
+     "cm"
+    ],
+    "weight": [
+     76.3,
+     "kg"
+    ]
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "field_accuracy": 1.0,
+    "fields": {
+     "height": "correct",
+     "weight": "correct"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "field_accuracy": 0.0,
+    "fields": {},
+    "format_valid": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "missing",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "missing",
+     "weight": "missing"
+    },
+    "format_valid": true
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_value",
+    "field_accuracy": 0.0,
+    "fields": {
+     "height": "wrong_value",
+     "weight": "wrong_value"
+    },
+    "format_valid": true
+   }
+  ]
+ },
+ "demo:6:3:E2E": {
+  "max_new_tokens": 2048,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Patient note:\nA 34-year-old man comes for a routine check-up. Height 190.75 cm, weight 76.3 kg. Blood pressure 118/76 mm Hg.\n\nQuestion: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nThink step by step, then end your answer with a JSON object of the form {\"answer\": <number>}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer_type": "number",
+   "ground_truth": 20.969855832241155,
+   "lower": 19.921363040629096,
+   "upper": 22.018348623853214
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "rel_error": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "out_of_bounds",
+    "format_valid": true,
+    "rel_error": 0.9523125
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "rel_error": "nan"
+   }
+  ]
+ },
+ "demo:6:3:K": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nYou are NOT given the patient's measurements. Write the general formula needed to answer this task, using only the variables listed below. Their units are fixed as stated; include any unit conversion inside your formula.\n\nKnown patient characteristics:\n- (none)\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nIf the formula depends on thresholds or categories, give one case per branch, each with a condition written with these variables (for example \"x <= 0.9\"), and use \"otherwise\" for the remaining case. Use only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"cases\": [{\"condition\": \"<condition, or always>\", \"formula\": \"<expression>\"}]}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 20.969855832241155,
+   "entities": {
+    "height": [
+     190.75,
+     "cm"
+    ],
+    "weight": [
+     76.3,
+     "kg"
+    ]
+   },
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:3:Kp": {
+  "max_new_tokens": 1024,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Task: What is the patient's body mass index (BMI)? Your answer should be in terms of kg/m².\n\nKnown patient characteristics:\n- (none)\n\nPatient values:\n- weight = 76.3\n- height = 190.75\n\nWrite the formula that applies to THIS patient, as an expression of the variables listed below (their units are fixed as stated; include any unit conversion inside your formula). Do NOT compute the result: use the variable names, not the patient's numbers.\n\nVariables:\n- weight: body weight (kg)\n- height: height (cm)\n\nUse only numbers, the variables, + - * / ^, parentheses and the functions sqrt, ln, log10, exp, min, max, abs, round.\n\nYou may think briefly, then end your answer with a JSON object of the form\n{\"formula\": \"<expression>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "answer": 20.969855832241155,
+   "branches": [],
+   "entities": {
+    "height": [
+     190.75,
+     "cm"
+    ],
+    "weight": [
+     76.3,
+     "kg"
+    ]
+   },
+   "mode": "patient",
+   "point_entities": null,
+   "symbols": [
+    "weight",
+    "height"
+   ]
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": true,
+    "point_pass_rate": 1.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "wrong_at_patient_point",
+    "format_valid": true,
+    "n_points": 51,
+    "original_point_correct": false,
+    "point_pass_rate": 0.0
+   },
+   {
+    "correct": false,
+    "error_type": "unknown_variable",
+    "format_valid": true,
+    "point_pass_rate": 0.0,
+    "unknown_variables": [
+     "cl",
+     "hco3",
+     "na"
+    ]
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "point_pass_rate": 0.0
+   }
+  ]
+ },
+ "demo:6:3:S": {
+  "max_new_tokens": 768,
+  "messages": [
+   {
+    "content": "You are a careful clinical calculation assistant.",
+    "role": "system"
+   },
+   {
+    "content": "Formula for Body Mass Index (BMI):\nbmi = weight / (height / 100)^2\n\nVariable values:\n- weight = 76.3   (body weight (kg))\n- height = 190.75   (height (cm))\n\nSubstitute the values into the formula. Do NOT compute or simplify anything: copy the formula exactly, replacing each variable by its value.\n\nEnd your answer with a JSON object of the form {\"expression\": \"<formula with the values substituted>\"}",
+    "role": "user"
+   }
+  ],
+  "reference": {
+   "formula": "weight / (height / 100)^2",
+   "gold_expression": "76.3 / (190.75 / 100)^2",
+   "gold_value": 20.969855832241155,
+   "values": {
+    "height": 190.75,
+    "weight": 76.3
+   }
+  },
+  "verdicts": [
+   {
+    "correct": true,
+    "error_type": null,
+    "format_valid": true,
+    "match": "canonical",
+    "missing_variables": [],
+    "value_matches": true
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "missing_or_wrong_value",
+    "format_valid": true,
+    "match": null,
+    "missing_variables": [
+     "height",
+     "weight"
+    ],
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   },
+   {
+    "correct": false,
+    "error_type": "format_invalid",
+    "format_valid": false,
+    "value_matches": false
+   }
+  ]
+ }
+}

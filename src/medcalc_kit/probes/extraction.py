@@ -348,7 +348,7 @@ def score_answer(reference: dict[str, Any], text: str, note: str | None = None,
         "format_valid": True,
         "correct": not errors,                      # exact match over all fields
         "field_accuracy": n_ok / len(results),
-        "error_type": None if not errors else max(set(errors), key=errors.count),
+        "error_type": None if not errors else max(errors, key=errors.count),   # ties: first field wins
         "fields": results,
     }
 
