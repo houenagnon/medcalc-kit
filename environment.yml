@@ -1,0 +1,14 @@
+# Local environment to run the notebooks of examples/ (data, a GPU model, the judge).
+#   conda env create -f environment.yml        # or: conda env update -f environment.yml --prune
+#   conda activate medcalc-kit
+#   python -m ipykernel install --user --name medcalc-kit --display-name "Python (medcalc-kit)"
+name: medcalc-kit
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - -e .[hf,dev]          # the kit from this checkout, with transformers/torch and the test tools
+      - jupyterlab
+      - matplotlib            # colour scales of the notebooks' tables

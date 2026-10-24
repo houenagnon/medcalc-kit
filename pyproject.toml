@@ -31,7 +31,7 @@ Changelog = "https://github.com/houenagnon/medcalc-kit/blob/main/CHANGELOG.md"
 Issues = "https://github.com/houenagnon/medcalc-kit/issues"
 
 [project.optional-dependencies]
-hf = ["torch>=2.1", "transformers>=4.56"]
+hf = ["torch>=2.1", "transformers>=4.56", "accelerate>=1.0"]
 dev = ["pytest>=8", "ruff>=0.5", "nbformat", "nbconvert", "ipykernel"]
 
 [tool.setuptools.packages.find]

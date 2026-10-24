@@ -30,7 +30,8 @@ pip install medcalc-kit            # data, calculators, probes, scoring (no torc
 pip install "medcalc-kit[hf]"      # + Hugging Face transformers backend for generation
 ```
 
-From source: `pip install -e ".[dev]"` then `pytest`.
+From source: `pip install -e ".[dev]"` then `pytest`. To run the notebooks: `conda env create -f environment.yml`
+(see [examples/README.md](https://github.com/houenagnon/medcalc-kit/blob/main/examples/README.md)).
 
 ## Documentation
 
