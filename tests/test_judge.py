@@ -106,7 +106,16 @@ def test_evaluate_model_with_a_judge(tmp_path):
 def test_a_new_prompt_is_graded_again():
     item = ITEMS.iloc[0]
     a, b = (judge.build(item, record(item, "x"), template=t) for t in ("v1", "v2"))
-    assert a["item_id"] != b["item_id"] and a["item_id"].endswith(a["template_hash"][:6])
+    assert a["item_id"] != b["item_id"]
+    full = mk.generation.prompt_key(a["messages"], a["max_new_tokens"])
+    assert a["item_id"].endswith(full)
+
+
+def test_a_change_of_the_rules_is_graded_again(monkeypatch):
+    item = ITEMS[ITEMS.probe == "A"].iloc[0]
+    before = judge.build(item, record(item, "x"))["item_id"]
+    monkeypatch.setitem(judge.CRITERIA, "A", "Correct if the result is exactly the reference.")
+    assert judge.build(item, record(item, "x"))["item_id"] != before
 
 
 @pytest.mark.gpu

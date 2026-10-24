@@ -2694,8 +2694,8 @@ The judge item for one answer (`record`, with its `text`) to an item of any prob
 
 template: prompt text with placeholders {task}, {reference}, {criterion}, {answer}, or the name of a variant of
 TEMPLATES. The prompt holds the task, the reference, the grading rule of the probe (CRITERIA) and the answer:
-nothing about the model or the condition evaluated. The id includes the template's hash, so that a resumed run
-never reuses verdicts given to another prompt.
+nothing about the model or the condition evaluated. The id ends with the key of the full prompt (template, rules,
+reference, answer and budget), so that a resumed run never reuses a verdict given to a different prompt.
 
 ```python
 >>> item = mk.probes.end_to_end.build(mk.data.demo()[1])

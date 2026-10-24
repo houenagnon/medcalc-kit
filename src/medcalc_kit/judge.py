@@ -27,7 +27,7 @@ from typing import Any
 
 import pandas as pd
 
-from medcalc_kit.generation.runner import model_name, read_records, run_items
+from medcalc_kit.generation.runner import model_name, prompt_key, read_records, run_items
 from medcalc_kit.parsing import extract_json
 from medcalc_kit.probes import reference_answer
 from medcalc_kit.probes.common import Item, as_item, as_items, render, resolve_template, template_hash
@@ -136,8 +136,8 @@ def build(item: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, temp
 
     template: prompt text with placeholders {task}, {reference}, {criterion}, {answer}, or the name of a variant of
     TEMPLATES. The prompt holds the task, the reference, the grading rule of the probe (CRITERIA) and the answer:
-    nothing about the model or the condition evaluated. The id includes the template's hash, so that a resumed run
-    never reuses verdicts given to another prompt.
+    nothing about the model or the condition evaluated. The id ends with the key of the full prompt (template, rules,
+    reference, answer and budget), so that a resumed run never reuses a verdict given to a different prompt.
 
     >>> item = mk.probes.end_to_end.build(mk.data.demo()[1])
     >>> j = build(item, {"item_id": item["item_id"], "text": '{"answer": 22.9}'})
@@ -156,7 +156,8 @@ def build(item: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, temp
     messages = ([{"role": "system", "content": system_prompt}] if system_prompt else []) + \
         [{"role": "user", "content": user}]
     key = template_hash(text)
-    return {"item_id": f"{item['item_id']}:judge:{_record_key(record)}:{key[:6]}", "example_id": item["example_id"],
+    full = prompt_key(messages, max_new_tokens)                 # changes with anything the judge reads
+    return {"item_id": f"{item['item_id']}:judge:{_record_key(record)}:{full}", "example_id": item["example_id"],
             "calculator_id": item["calculator_id"], "calculator_name": item.get("calculator_name", ""),
             "probe": "judge", "task": "judge", "template": name, "template_hash": key, "messages": messages,
             "max_new_tokens": max_new_tokens,
