@@ -45,7 +45,7 @@ class EvaluationReport:
     prompt, for any further analysis.
 
     general:        end-to-end accuracy per category of calculator, and overall ("all")
-    steps:          per step (E, K, S, A, and E2E on the same examples): well-formed answers, competence, accuracy
+    steps:          per step (E, U, K, S, A, and E2E on the same examples): well-formed answers, competence, accuracy
     by_calculator:  accuracy per calculator and step: where the chain breaks
     examples:       one row per example: correctness at each step and the first step that fails
     first_failures: for the equation-based examples, how often each step is the first to fail, and the E2E accuracy
@@ -60,7 +60,7 @@ class EvaluationReport:
     >>> def oracle(messages, max_new_tokens):                   # a perfect "model", to show the report
     ...     return mk.reference_answer(by_prompt[mk.generation.prompt_key(messages, max_new_tokens)])
     >>> ds = mk.data.demo()
-    >>> items = mk.ProbeSuite({"E": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}).build(ds)
+    >>> items = mk.ProbeSuite({"E": {}, "U": {}, "K": {"mode": "patient"}, "S": {}, "A": {}, "E2E": {}}).build(ds)
     >>> by_prompt = {mk.generation.prompt_key(it["messages"], it["max_new_tokens"]): it
     ...              for it in mk.probes.as_items(items)}
     >>> import tempfile
@@ -70,6 +70,7 @@ class EvaluationReport:
       general (end to end): 100.0% of 4 examples (4 calculators)
       step by step (4 examples of equation-based calculators):
         E    extraction         100.0%
+        U    unit conversion    100.0%
         K    formula knowledge  100.0%
         S    substitution       100.0%
         A    arithmetic         100.0%
@@ -257,7 +258,7 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
                    items: pd.DataFrame | None = None, judge: Any = None,
                    judge_options: Mapping[str, Any] | None = None) -> EvaluationReport:
     """Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
-    (E, K, S, A on the equation-based calculators). Returns an EvaluationReport.
+    (E, U, K, S, A on the equation-based calculators). Returns an EvaluationReport.
 
     model:          what `run_items` accepts: an object with `generate_batch` or `generate` (e.g. HFBackend), or a
                     function `generate(messages, max_new_tokens)`. None: only score generations already saved.

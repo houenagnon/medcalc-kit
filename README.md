@@ -60,6 +60,7 @@ MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
   general (end to end): …% of 1100 examples (55 calculators)
   step by step (660 examples of equation-based calculators):
     E    extraction         …%
+    U    unit conversion    …%
     K    formula knowledge  …%
     S    substitution       …%
     A    arithmetic         …%

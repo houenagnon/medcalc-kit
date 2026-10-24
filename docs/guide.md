@@ -62,6 +62,7 @@ MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
   general (end to end): 41.2% of 1100 examples (55 calculators)
   step by step (660 examples of equation-based calculators):
     E    extraction         85.0%
+    U    unit conversion    80.3%
     K    formula knowledge  20.1%
     ...
 ```
@@ -71,7 +72,7 @@ MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
 | view | content |
 |---|---|
 | `report.general` | E2E accuracy per category (lab test, physical, dosage, risk, severity, diagnosis, date) and `all` |
-| `report.steps` | per step (E, K, S, A, E2E on the same examples): `n`, `well_formed`, `competence`, `accuracy` |
+| `report.steps` | per step (E, U, K, S, A, E2E on the same examples): `n`, `well_formed`, `competence`, `accuracy` |
 | `report.by_calculator` | accuracy per calculator and step |
 | `report.examples` | one row per example: correct at each step, and `first_failure`, the first step that fails |
 | `report.first_failures` | how often each step is the first to fail, and the E2E accuracy in each case |

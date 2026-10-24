@@ -37,7 +37,7 @@ def _frame(data) -> pd.DataFrame | None:
 class ProbeSuite:
     """Builds the items of several probes at once, giving each probe the context it needs.
 
-    E2E items are built for every example of the benchmark. The step probes (E, K, S, A) need the reference
+    E2E items are built for every example of the benchmark. The step probes (E, U, K, S, A) need the reference
     computation, so they are built only for the 33 equation-based calculators of the registry; other examples
     (rule-based scores, dates) get E2E only.
 
