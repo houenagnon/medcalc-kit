@@ -1408,7 +1408,8 @@ Two modes:
 Scoring: the model's formula is evaluated (safe parser, never eval) at the patient's point and at up to
 `n_points` other patients — real patients of the same calculator when a pool is given at build time
 (restricted to the patient's branch in "patient" mode), otherwise perturbations of the patient — and compared
-with the registry. It is correct only if it is right at every point. Symbolic comparison is avoided on purpose:
+with the registry. It is correct if it is right at the patient's point and at a share of all points of at least
+`min_pass_rate` (default 1.0: every point). Symbolic comparison is avoided on purpose:
 branches, rounded constants and equivalent rewritings make it fragile.
 
 In "general" mode the prompt depends on the patient only through categorical fields, so many examples share
@@ -1456,8 +1457,8 @@ def score(item: Item, text: str, **options: Any) -> dict[str, Any]
 ```
 
 Score a model answer for a K item. Options: see score_answer (rel_tol, abs_tol, n_points, case_semantics,
-perturbation_factor, plausible_ranges, details). The perturbation seed is derived from the item id, so
-scores are reproducible.
+perturbation_factor, plausible_ranges, min_pass_rate, details). The perturbation seed is derived from the item
+id, so scores are reproducible.
 
 ```python
 >>> item = build(mk.data.demo()[1])
@@ -1467,10 +1468,22 @@ scores are reproducible.
 ['h', 'w']
 ```
 
+A formula right at the patient's point but not everywhere can be accepted with a lower threshold:
+
+```python
+>>> almost = '{"cases": [{"condition": "height > 220", "formula": "0"}, ' \
+...          '{"condition": "otherwise", "formula": "weight / (height / 100)^2"}]}'
+>>> v = score(item, almost)
+>>> v["correct"], v["error_type"], round(v["point_pass_rate"], 2)
+(False, 'wrong_elsewhere', 0.94)
+>>> score(item, almost, min_pass_rate=0.9)["correct"]
+True
+```
+
 ### `probes.knowledge.score_answer`
 
 ```python
-def score_answer(reference: dict[str, Any], text: str, calculator_id: str, seed: int = 0, *, rel_tol: float = 0.01, abs_tol: dict[str, float] | None = None, n_points: int = 50, case_semantics: str = 'all_agree', perturbation_factor: float = 3.0, plausible_ranges: dict[str, tuple[float, float]] | None = {'age': (0, 120), 'weight': (0.3, 350), 'height': (30, 250), 'target_bmi': (10, 60), 'scr': (0.1, 25), 'scr_raw': (0.1, 25), 'ucr': (1, 1000), 'na': (100, 200), 'na_raw': (100, 200), 'sna': (100, 200), 'una': (1, 400), 'cl': (60, 150), 'hco3': (1, 60), 'albumin': (0.5, 7), 'ca': (3, 25), 'glucose': (10, 3000), 'bun': (1, 300), 'tc': (50, 1000), 'hdl': (3, 200), 'tg': (10, 10000), 'insulin': (0.1, 1000), 'ast': (1, 20000), 'alt': (1, 20000), 'platelets': (1, 2000), 'bili_raw': (0.05, 80), 'inr_raw': (0.5, 20), 'sbp': (40, 300), 'dbp': (10, 200), 'hr': (20, 300), 'qt': (150, 800), 'dose': (0.01, 5000)}, details: bool = False) -> dict[str, Any]
+def score_answer(reference: dict[str, Any], text: str, calculator_id: str, seed: int = 0, *, rel_tol: float = 0.01, abs_tol: dict[str, float] | None = None, n_points: int = 50, case_semantics: str = 'all_agree', perturbation_factor: float = 3.0, plausible_ranges: dict[str, tuple[float, float]] | None = {'age': (0, 120), 'weight': (0.3, 350), 'height': (30, 250), 'target_bmi': (10, 60), 'scr': (0.1, 25), 'scr_raw': (0.1, 25), 'ucr': (1, 1000), 'na': (100, 200), 'na_raw': (100, 200), 'sna': (100, 200), 'una': (1, 400), 'cl': (60, 150), 'hco3': (1, 60), 'albumin': (0.5, 7), 'ca': (3, 25), 'glucose': (10, 3000), 'bun': (1, 300), 'tc': (50, 1000), 'hdl': (3, 200), 'tg': (10, 10000), 'insulin': (0.1, 1000), 'ast': (1, 20000), 'alt': (1, 20000), 'platelets': (1, 2000), 'bili_raw': (0.05, 80), 'inr_raw': (0.5, 20), 'sbp': (40, 300), 'dbp': (10, 200), 'hr': (20, 300), 'qt': (150, 800), 'dose': (0.01, 5000)}, min_pass_rate: float = 1.0, details: bool = False) -> dict[str, Any]
 ```
 
 Score a model answer against a K reference.
@@ -1478,6 +1491,8 @@ Score a model answer against a K reference.
 rel_tol: relative tolerance at each point; abs_tol: per-calculator absolute tolerance replacing rel_tol
 (default DEFAULT_ABS_TOL; {} to disable); n_points: test points besides the patient's; case_semantics:
 "all_agree" or "first_match" (see eval_cases); perturbation_factor, plausible_ranges: see test_points.
+min_pass_rate: share of the test points the formula must be right at (default 1.0, all of them); a formula
+wrong at the patient's point is never correct, whatever the threshold.
 details=True adds `points`: one row per test point (inputs, registry value, model value, ok).
 
 ```python

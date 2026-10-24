@@ -11,7 +11,8 @@ Two modes:
 Scoring: the model's formula is evaluated (safe parser, never eval) at the patient's point and at up to
 `n_points` other patients — real patients of the same calculator when a pool is given at build time
 (restricted to the patient's branch in "patient" mode), otherwise perturbations of the patient — and compared
-with the registry. It is correct only if it is right at every point. Symbolic comparison is avoided on purpose:
+with the registry. It is correct if it is right at the patient's point and at a share of all points of at least
+`min_pass_rate` (default 1.0: every point). Symbolic comparison is avoided on purpose:
 branches, rounded constants and equivalent rewritings make it fragile.
 
 In "general" mode the prompt depends on the patient only through categorical fields, so many examples share
@@ -56,6 +57,8 @@ from medcalc_kit.probes.common import (
 
 DEFAULT_MAX_NEW_TOKENS = 1024
 DEFAULT_N_POINTS = 50
+# Share of test points (the patient's included) the formula must be right at; the patient's point is always required.
+DEFAULT_MIN_PASS_RATE = 1.0
 DEFAULT_REL_TOL = 0.01
 # Per-calculator absolute tolerance replacing the relative one (MELD Na: integer score with nested rounding).
 DEFAULT_ABS_TOL = {"23": 1.0}
@@ -331,12 +334,14 @@ def score_answer(reference: dict[str, Any], text: str, calculator_id: str, seed:
                  n_points: int = DEFAULT_N_POINTS, case_semantics: str = "all_agree",
                  perturbation_factor: float = DEFAULT_PERTURBATION_FACTOR,
                  plausible_ranges: dict[str, tuple[float, float]] | None = PLAUSIBLE_RANGES,
-                 details: bool = False) -> dict[str, Any]:
+                 min_pass_rate: float = DEFAULT_MIN_PASS_RATE, details: bool = False) -> dict[str, Any]:
     """Score a model answer against a K reference.
 
     rel_tol: relative tolerance at each point; abs_tol: per-calculator absolute tolerance replacing rel_tol
     (default DEFAULT_ABS_TOL; {} to disable); n_points: test points besides the patient's; case_semantics:
     "all_agree" or "first_match" (see eval_cases); perturbation_factor, plausible_ranges: see test_points.
+    min_pass_rate: share of the test points the formula must be right at (default 1.0, all of them); a formula
+    wrong at the patient's point is never correct, whatever the threshold.
     details=True adds `points`: one row per test point (inputs, registry value, model value, ok).
 
     >>> ref = build(mk.data.demo()[1])["reference"]
@@ -380,7 +385,7 @@ def score_answer(reference: dict[str, Any], text: str, calculator_id: str, seed:
         passes.append(ok)
         rows.append({**env, "registry": gold, "model": v, "ok": ok})
     rate = sum(passes) / len(passes)
-    correct = all(passes)
+    correct = passes[0] and rate >= min_pass_rate
     out = {
         "format_valid": True,
         "correct": correct,
@@ -394,14 +399,24 @@ def score_answer(reference: dict[str, Any], text: str, calculator_id: str, seed:
 
 def score(item: Item, text: str, **options: Any) -> dict[str, Any]:
     """Score a model answer for a K item. Options: see score_answer (rel_tol, abs_tol, n_points, case_semantics,
-    perturbation_factor, plausible_ranges, details). The perturbation seed is derived from the item id, so
-    scores are reproducible.
+    perturbation_factor, plausible_ranges, min_pass_rate, details). The perturbation seed is derived from the item
+    id, so scores are reproducible.
 
     >>> item = build(mk.data.demo()[1])
     >>> score(item, '{"cases": [{"condition": "always", "formula": "weight / (height / 100)^2"}]}')["n_points"]
     51
     >>> score(item, '{"cases": [{"condition": "always", "formula": "w / h^2"}]}')["unknown_variables"]
     ['h', 'w']
+
+    A formula right at the patient's point but not everywhere can be accepted with a lower threshold:
+
+    >>> almost = '{"cases": [{"condition": "height > 220", "formula": "0"}, ' \\
+    ...          '{"condition": "otherwise", "formula": "weight / (height / 100)^2"}]}'
+    >>> v = score(item, almost)
+    >>> v["correct"], v["error_type"], round(v["point_pass_rate"], 2)
+    (False, 'wrong_elsewhere', 0.94)
+    >>> score(item, almost, min_pass_rate=0.9)["correct"]
+    True
     """
     return score_answer(item["reference"], text, item["calculator_id"],
                         seed=zlib.crc32(item["item_id"].encode()), **options)
