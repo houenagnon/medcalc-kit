@@ -78,6 +78,7 @@ MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
 | `report.consistency` | E2E accuracy when every step succeeds and when a step fails |
 | `report.prompt_sensitivity` | with `prompt_variants=3`: accuracy per step and wording, mean, sd, range ([section 10](#10-prompt-design-and-robustness)) |
 | `report.by_label` | accuracy per item label: custom variants (`Kg`) and paraphrases (`K@v2`) |
+| `report.llm_vs_auto` | with `judge=`: the LLM evaluation next to the automatic one, per probe ([section 11](#11-further-analyses)) |
 | `report.scores`, `report.items` | every answer (text, verdict) and every prompt, for your own analyses |
 
 Everything is saved in `output_dir` (default `medcalc_eval/<model id>/`): the items, `generations.jsonl` (written
@@ -455,20 +456,25 @@ report.by_label                         # accuracy with no help, with the values
 `provide` adds the correct values (in the formula's units) and/or the formula of the patient's branch, from the
 registry, after the question; the scoring does not change.
 
-**An LLM judge for the free reasoning (secondary analysis).** The end-to-end answer is always scored
-deterministically. To locate where a wrong reasoning goes astray, a judge model can read it next to the registry's
-full computation and name the first wrong step:
+**LLM evaluation, next to the automatic one.** An LLM judge can grade every answer too, for every probe: it reads
+the task as the model received it, the reference answer from the registry and the probe's grading rule
+(`judge.CRITERIA`, the same rules as the automatic scoring; for E2E, only the final answer against the ground truth),
+and answers correct or incorrect with a short reason.
 
 ```python
-notes = mk.judge.annotate(items, "medcalc_eval/my-model/generations.jsonl", judge_model,
-                          dataset=ds, out_path="judge/my-model.jsonl")
-notes.first_error.value_counts()        # none, extraction, conversion, formula, substitution, arithmetic, other
-mk.judge.agreement(notes, human_labels) # raw agreement, Cohen's kappa, confusion matrix
+from medcalc_kit.generation.hf import HFBackend
+
+judge = HFBackend("Qwen/Qwen3-8B", deterministic=True, chat_template_kwargs={"enable_thinking": False})
+report = mk.evaluate_model(model, judge=judge)
+report.llm_vs_auto              # per probe: automatic vs LLM accuracy, agreement, kappa, false acceptances/rejections
+report.scores.judge_correct     # the judge's verdict on each answer
 ```
 
-The judge is blind: its prompt holds the note, the question, the reference computation and the reasoning, nothing
-about the model or the condition. Validate it on human labels (`agreement`) before using its annotations, and
-report them as a secondary analysis.
+The automatic evaluation stays the reference, so the comparison measures the judge's reliability without human
+labels. The judge is blind (nothing about the model evaluated is in its prompt) and deterministic: greedy decoding,
+one prompt at a time, deterministic torch kernels (`deterministic=True`), and its model revision and template hash are
+recorded with every verdict. `mk.judge.annotate(items, records, judge)` and `mk.judge.compare(llm, scores)` do the
+same on answers collected elsewhere.
 
 **Models modified in memory.** `HFBackend.from_model(model, tokenizer)` wraps a model already loaded, for example
 pruned or quantized in the same session, without loading it again.

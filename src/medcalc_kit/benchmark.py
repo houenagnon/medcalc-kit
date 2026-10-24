@@ -25,6 +25,7 @@ from typing import Any
 
 import pandas as pd
 
+from medcalc_kit import judge as llm_judge
 from medcalc_kit.calculators import CALCULATORS
 from medcalc_kit.data import MedCalcDataset, load, usable_train_pool
 from medcalc_kit.evaluate import score_records, summary
@@ -84,6 +85,7 @@ class EvaluationReport:
     items: pd.DataFrame
     scores: pd.DataFrame
     output_dir: Path | None = None
+    llm: pd.DataFrame | None = None           # the LLM judge's verdicts (evaluate_model(judge=...)), else None
 
     @property
     def _primary(self) -> pd.DataFrame:
@@ -119,6 +121,11 @@ class EvaluationReport:
                 lines.append(f"  consistency: E2E correct for {c.loc['all steps correct', 'e2e_accuracy']:.0%} of the "
                              f"examples whose steps all succeed, {c.loc['a step failed', 'e2e_accuracy']:.0%} when "
                              "a step fails")
+        if self.llm is not None and len(self.llm):
+            c = self.llm_vs_auto.loc["all"]
+            judge_id = self.llm.judge_model_id.iloc[0]
+            lines.append(f"  LLM evaluation ({judge_id}): {c.llm_accuracy:.1%} correct; agreement with the automatic "
+                         f"evaluation {c.agreement:.0%} (kappa {c.kappa:.2f})")
         return "\n".join(lines)
 
     @property
@@ -211,6 +218,14 @@ class EvaluationReport:
         table["range"] = table[variants].max(axis=1) - table[variants].min(axis=1)
         return table
 
+    @property
+    def llm_vs_auto(self) -> pd.DataFrame:
+        """With an LLM judge: per probe and overall, the accuracy given by the automatic and the LLM evaluations, their
+        agreement and kappa, and the judge's false acceptances and rejections (see judge.compare)."""
+        if self.llm is None:
+            raise ValueError("no LLM evaluation: run evaluate_model(..., judge=judge_model)")
+        return llm_judge.compare(self.llm, self._primary)
+
     def save(self, directory: str | Path | None = None) -> Path:
         """Write every view as CSV (and the scores) to `directory` (default: the evaluation's output_dir)."""
         out = Path(directory or self.output_dir or ".")
@@ -222,6 +237,9 @@ class EvaluationReport:
         self.consistency.to_csv(out / "consistency.csv")
         self.prompt_sensitivity.to_csv(out / "prompt_sensitivity.csv")
         self.by_label.to_csv(out / "by_label.csv")
+        if self.llm is not None:
+            self.llm_vs_auto.to_csv(out / "llm_vs_auto.csv")
+            self.llm.to_csv(out / "llm_evaluation.csv", index=False)
         self.scores.drop(columns=["verdict"], errors="ignore").to_csv(out / "scores.csv", index=False)
         return out
 
@@ -236,7 +254,8 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
                    probe_options: Mapping[str, Mapping[str, Any]] | None = None,
                    prompt_variants: int | Iterable[str] = 1, batch_size: int = 8,
                    model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None,
-                   items: pd.DataFrame | None = None) -> EvaluationReport:
+                   items: pd.DataFrame | None = None, judge: Any = None,
+                   judge_options: Mapping[str, Any] | None = None) -> EvaluationReport:
     """Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
     (E, K, S, A on the equation-based calculators). Returns an EvaluationReport.
 
@@ -259,6 +278,10 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     items:          items already built (e.g. ProbeSuite variants labelled "Kg", or read_items): evaluated as they
                     are, without building any; split, per_calculator, steps, k_mode, k_pool, probe_options and
                     prompt_variants then do not apply. Calculator categories come from `dataset` when given.
+    judge:          an LLM to grade every answer as well (LLM evaluation, next to the automatic one): what run_items
+                    accepts, e.g. HFBackend("Qwen/Qwen3-8B", deterministic=True). Its verdicts are in report.llm and
+                    scores.judge_correct, compared with the automatic evaluation in report.llm_vs_auto.
+                    judge_options: passed to judge.annotate (template, max_new_tokens, batch_size, model_id).
 
     >>> def always_12(messages, max_new_tokens):
     ...     return '{"answer": 12, "result": 12}'
@@ -268,7 +291,7 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     0.25
     """
     if items is not None:
-        return _evaluate_items(model, items, output_dir, dataset, batch_size, model_id, scoring)
+        return _evaluate_items(model, items, output_dir, dataset, batch_size, model_id, scoring, judge, judge_options)
     ds = dataset if dataset is not None else load()
     examples = ds.filter(split=split)
     if not len(examples):
@@ -306,12 +329,13 @@ def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset:
     suite = ProbeSuite(specs, schema=equation if len(equation) else None, k_pool=pool, seed=seed)
     items = suite.build(examples)
 
-    return _evaluate_items(model, items, output_dir, examples, batch_size, model_id, scoring)
+    return _evaluate_items(model, items, output_dir, examples, batch_size, model_id, scoring, judge, judge_options)
 
 
 def _evaluate_items(model: Any, items: pd.DataFrame, output_dir: str | Path | None,
                     examples: MedCalcDataset | None, batch_size: int, model_id: str | None,
-                    scoring: dict[str, dict[str, Any]] | None) -> EvaluationReport:
+                    scoring: dict[str, dict[str, Any]] | None, judge: Any = None,
+                    judge_options: Mapping[str, Any] | None = None) -> EvaluationReport:
     items = items_frame(items)
     model_id = model_id or (model_name(model) if model is not None else "model")
     out = Path(output_dir) if output_dir is not None else Path("medcalc_eval") / _slug(model_id)
@@ -330,6 +354,10 @@ def _evaluate_items(model: Any, items: pd.DataFrame, output_dir: str | Path | No
         names = {**names, **meta["Calculator Name"].to_dict()}
     scores["calculator_category"] = scores.example_id.map(category).fillna("") if category else ""
     scores["calculator_name"] = scores.example_id.map(names)
-    report = EvaluationReport(model_id, items, scores, out)
+    llm = None
+    if judge is not None:
+        llm = llm_judge.annotate(items, generations, judge, out_path=out / "judge.jsonl", **(judge_options or {}))
+        scores["judge_correct"] = scores.item_id.map(llm.set_index("item_id").judge_correct) if len(llm) else None
+    report = EvaluationReport(model_id, items, scores, out, llm)
     report.save(out)
     return report

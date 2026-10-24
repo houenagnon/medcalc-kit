@@ -1,20 +1,21 @@
-"""Optional LLM judge: a SECONDARY analysis of the free reasoning of end-to-end (E2E) answers.
+"""LLM evaluation: an LLM judge grades the answers, next to the automatic (deterministic) evaluation.
 
-The judge reads the patient note, the question, the full reference computation of the registry (values extracted,
-values in the formula's units, formula of the patient's branch, substituted expression, result) and the reasoning of
-the model evaluated, and names the first step that went wrong. It never replaces the deterministic scoring of the
-final answer (`probes.score`): use it to locate errors, and check it against human labels (`agreement`) first.
+For every answer, to any probe (E, U, K, S, A, E2E), the judge reads the task as the model received it, the
+reference answer from the registry, and the probe's grading rule, and says whether the answer is correct. For E2E it
+checks the final answer against the ground truth (within the benchmark's interval), like the automatic scoring.
 
-The judge is blind: its prompt holds nothing about the condition evaluated (model name, sparsity, method, metadata).
+The automatic evaluation stays the reference: `compare` measures, per probe, how often the judge agrees with it
+(agreement, Cohen's kappa, false acceptances and rejections), which tells how far the judge can be trusted, without
+human labels. The judge is blind (its prompt holds nothing about the model evaluated) and deterministic with greedy
+decoding, one prompt at a time (`batch_size=1`) and HFBackend(..., deterministic=True).
 
-    >>> ex = mk.data.demo()[2]                                  # anion gap
-    >>> e2e = mk.probes.end_to_end.build(ex)
-    >>> record = {"item_id": e2e["item_id"], "model_id": "model-A", "text": "140 - 104 - 24 = 14. {\\"answer\\": 14}"}
-    >>> item = build(e2e, record, example=ex)
-    >>> "model-A" in item["messages"][-1]["content"]
+    >>> items = mk.ProbeSuite(["A"]).build(mk.data.demo())
+    >>> item = mk.probes.as_item(items.iloc[2])                 # anion gap: 140 - (104 + 24)
+    >>> judge_item = build(item, {"item_id": item["item_id"], "model_id": "model-A", "text": '{"result": 12}'})
+    >>> "model-A" in judge_item["messages"][-1]["content"]
     False
-    >>> parse('Checking each step... {"first_error": "arithmetic", "evidence": "= 14"}', item)
-    {'format_valid': True, 'first_error': 'arithmetic', 'evidence': '= 14'}
+    >>> parse('The value matches. {"verdict": "correct", "reason": "12 equals the reference"}')
+    {'format_valid': True, 'judge_correct': True, 'reason': '12 equals the reference'}
 """
 from __future__ import annotations
 
@@ -26,228 +27,186 @@ from typing import Any
 
 import pandas as pd
 
-from medcalc_kit import expr
-from medcalc_kit.calculators import CALCULATORS
-from medcalc_kit.data import Example, MedCalcDataset, as_example
 from medcalc_kit.generation.runner import model_name, read_records, run_items
 from medcalc_kit.parsing import extract_json
-from medcalc_kit.probes.common import (
-    DEFAULT_DIGITS,
-    Item,
-    as_item,
-    as_items,
-    branch_formula,
-    fmt,
-    make_item,
-    render,
-    resolve_template,
-    symbol_doc,
-)
+from medcalc_kit.probes import reference_answer
+from medcalc_kit.probes.common import Item, as_item, as_items, render, resolve_template, template_hash
 
-DEFAULT_MAX_NEW_TOKENS = 1024
-DEFAULT_SYSTEM_PROMPT = "You are a meticulous reviewer of clinical calculations."
-# The steps of a calculation, in order; the judge names the first one that went wrong.
-DEFAULT_STEPS = ("extraction", "conversion", "formula", "substitution", "arithmetic")
-STEP_DESCRIPTIONS = {
-    "extraction": "reading the patient's values in the note",
-    "conversion": "converting the values to the units of the formula",
-    "formula": "choosing and writing the right formula (and branch)",
-    "substitution": "putting the values into the formula",
-    "arithmetic": "computing the result",
+DEFAULT_MAX_NEW_TOKENS = 512
+DEFAULT_SYSTEM_PROMPT = "You are a meticulous grader of clinical calculations."
+
+# The grading rule of each probe, as the judge reads it (the same rules as the automatic scoring).
+CRITERIA = {
+    "E": ("Correct only if every field has the reference value: numbers may be given in another unit that converts to "
+          "the reference value (1 % tolerance), and a field absent from the reference must be reported as not "
+          "mentioned (null or false)."),
+    "U": "Correct if the converted value is within 1 % of the reference value, in the requested unit.",
+    "K": ("Correct if the formula, written with the variable names, gives the reference formula's value for this "
+          "patient and is mathematically equivalent to it (rearranged terms, other notation, or unit conversions "
+          "written inside the formula are fine). A number instead of a formula is incorrect."),
+    "S": ("Correct if the answer is the given formula with each variable replaced by its value and nothing computed or "
+          "simplified; the order of terms may differ. A partly computed expression is incorrect."),
+    "A": "Correct if the result is within 1 % of the reference value.",
+    "E2E": ("Correct if the final answer is within the reference interval (for a date or a duration: exactly the "
+            "reference). Only the final answer is graded, not the reasoning."),
 }
 
-# How to judge, in every template ({rules}): a step done differently but correctly is not an error.
-JUDGING_RULES = (
-    "A step done differently from the reference but correctly is NOT an error: other units (for example metres "
-    "instead of centimetres), an equivalent form of the formula, or rounding that changes the result by less than "
-    "1 %. Name a step only if it gives a wrong value. If every step is right, answer \"none\". In the evidence, "
-    "quote plain text (no backslashes or LaTeX)."
-)
-# Placeholders: {note}, {question}, {reference} (the registry's computation), {reasoning}, {rules} (JUDGING_RULES),
-# {categories} (one line per allowed answer), {choices} (the allowed values of first_error).
+# Placeholders: {task} (the task as the model received it), {reference}, {criterion}, {answer}.
 DEFAULT_TEMPLATE = (
-    "You check the reasoning of an assistant who answered a clinical calculation question.\n\n"
-    "Patient note:\n{note}\n\n"
-    "Question: {question}\n\n"
-    "Reference computation (correct):\n{reference}\n\n"
-    "Reasoning to check:\n<<<\n{reasoning}\n>>>\n\n"
-    "Compare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n"
-    "{categories}\n\n{rules}\n\n"
-    "Quote a short passage of the reasoning that shows it. End your answer with a JSON object of the form\n"
-    '{"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'
+    "You grade the answer of an assistant to a clinical calculation task, against the reference answer.\n\n"
+    "Task given to the assistant:\n<<<\n{task}\n>>>\n\n"
+    "Reference answer: {reference}\n\n"
+    "Grading rule: {criterion}\n\n"
+    "Assistant's answer:\n<<<\n{answer}\n>>>\n\n"
+    "Decide whether the assistant's final answer is correct according to the grading rule. End your answer with a "
+    'JSON object of the form {"verdict": "correct" or "incorrect", "reason": "<one short sentence, plain text>"}'
 )
 # Paraphrases of the default template: the same information, conventions and answer format, worded differently.
 TEMPLATES = {
     "v1": DEFAULT_TEMPLATE,
-    "v2": ("Below are a clinical calculation question, the correct reference computation, and the reasoning of an "
-           "assistant. Find the first step at which the reasoning departs from a correct computation.\n\n"
-           "Patient note:\n{note}\n\n"
-           "Question: {question}\n\n"
-           "Correct reference computation:\n{reference}\n\n"
-           "Assistant's reasoning:\n<<<\n{reasoning}\n>>>\n\n"
-           "Possible answers:\n{categories}\n\n{rules}\n\n"
-           "Support your choice with a short quote from the reasoning, then finish with a JSON object "
-           '{"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'),
-    "v3": ("Note:\n{note}\n\nQuestion: {question}\n\nReference (correct):\n{reference}\n\n"
-           "Reasoning:\n<<<\n{reasoning}\n>>>\n\n"
-           "Which step of the reasoning is the first one that is wrong?\n{categories}\n\n{rules}\n\n"
-           'End with {"first_error": "<one of {choices}>", "evidence": "<short quote from the reasoning>"}'),
+    "v2": ("Below are a clinical calculation task, its reference answer, a grading rule and an assistant's answer. "
+           "Grade the assistant's final answer.\n\n"
+           "Task:\n<<<\n{task}\n>>>\n\n"
+           "Reference answer: {reference}\n\n"
+           "Rule: {criterion}\n\n"
+           "Answer to grade:\n<<<\n{answer}\n>>>\n\n"
+           'Finish with a JSON object {"verdict": "correct" or "incorrect", "reason": "<one short sentence, plain '
+           'text>"}'),
+    "v3": ("Task:\n<<<\n{task}\n>>>\nReference: {reference}\nRule: {criterion}\nAnswer:\n<<<\n{answer}\n>>>\n\n"
+           'Is the final answer correct? End with {"verdict": "correct" or "incorrect", "reason": "<one short '
+           'sentence, plain text>"}'),
 }
 
 
-def _choices(steps: Iterable[str]) -> list[str]:
-    return ["none", *steps, "other"]
+def reference_text(item: Item | pd.Series) -> str:
+    """The reference answer of an item, as the judge reads it.
 
-
-def reference_text(example: Example | dict[str, Any], steps: Iterable[str] = DEFAULT_STEPS,
-                   digits: int = DEFAULT_DIGITS) -> str:
-    """The registry's computation for an example, one block per step, as shown to the judge.
-
-    >>> print(reference_text(mk.data.demo()[1]))
-    Values in the note:
-    - weight: 70 kg
-    - height: 175 cm
-    Values in the units of the formula:
-    - weight = 70 (body weight (kg))
-    - height = 175 (height (cm))
-    Formula (branch for this patient): bmi = weight / (height / 100)^2
-    Substituted expression: 70 / (175 / 100)^2
-    Result: 22.86
+    >>> ds = mk.data.demo()
+    >>> reference_text(mk.probes.arithmetic.build(ds[2])), reference_text(mk.probes.end_to_end.build(ds[2]))
+    ('12', '12 (accepted interval: 11.4 to 12.6)')
+    >>> reference_text(mk.probes.knowledge.build(ds[1], mode="patient"))
+    'bmi = weight / (height / 100)^2'
     """
-    ex = as_example(example)
-    if ex.calculator_id not in CALCULATORS:
-        raise ValueError(f"calculator {ex.calculator_id} is not in the registry: no reference computation")
-    steps = set(steps)
-    formula, values, d = branch_formula(ex, digits)
-    lines = []
-    if "extraction" in steps:
-        lines.append("Values in the note:")
-        for k, v in ex.entities.items():
-            shown = " ".join(fmt(x, digits) if isinstance(x, (int, float)) and not isinstance(x, bool) else str(x)
-                             for x in v) if isinstance(v, list) else str(v)
-            lines.append(f"- {k}: {shown}")
-    if "conversion" in steps:
-        lines.append("Values in the units of the formula:")
-        lines += [f"- {k} = {fmt(v, digits)} ({symbol_doc(k, ex.entities)})" for k, v in d.inputs.items()]
-    if "formula" in steps:
-        branch = f" [{', '.join(d.branches)}]" if d.branches else ""
-        lines.append(f"Formula (branch for this patient{branch}): {d.steps[-1].name} = {expr.to_str(formula)}")
-    if "substitution" in steps:
-        lines.append(f"Substituted expression: {expr.to_str(expr.substitute(formula, values))}")
-    if "arithmetic" in steps:
-        lines.append(f"Result: {fmt(d.answer, 4)}")
-    return "\n".join(lines)
+    item = as_item(item)
+    task, ref = item.get("task", item["probe"]), item["reference"]
+    if task == "E2E":
+        if ref.get("answer_type", "number") != "number":
+            return str(ref["ground_truth"])
+        return f"{ref['ground_truth']:.6g} (accepted interval: {ref['lower']:.6g} to {ref['upper']:.6g})"
+    if task in ("A", "U"):
+        unit = f" {ref['target_unit']}" if task == "U" else ""
+        return f"{ref['gold_value']:.6g}{unit}"
+    if task == "S":
+        return ref["gold_expression"]
+    if task == "K":
+        answer = json.loads(reference_answer(item))
+        formula = answer.get("formula") or answer["cases"][0]["formula"]
+        note = "" if ref.get("mode") == "patient" else " (the formula of this patient's case; other cases may follow)"
+        return f"{_target(item)}{formula}{note}"
+    return reference_answer(item)                                   # E: every field in the expected format
+
+
+def _target(item: Item) -> str:
+    from medcalc_kit.calculators import derive
+
+    d = derive(item["calculator_id"], item["reference"]["entities"])
+    return f"{d.steps[-1].name} = "
 
 
 def _record_key(record: Mapping[str, Any]) -> str:
-    """Identifies the judged answer (item, model, text, metadata) without showing any of it to the judge."""
+    """Identifies the graded answer (item, model, text, metadata) without showing any of it to the judge."""
     payload = json.dumps([record.get("item_id"), record.get("model_id"), record.get("text"),
                           {k: v for k, v in record.items() if k.startswith("meta")}], sort_keys=True, default=str)
     return hashlib.sha1(payload.encode()).hexdigest()[:10]
 
 
-def build(item_e2e: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, example: Example | dict[str, Any],
-          template: str = "v1", steps: Iterable[str] = DEFAULT_STEPS, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
-          system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = DEFAULT_DIGITS) -> Item:
-    """The judge item for one answer (`record`, with its `text`) to an E2E item.
+def build(item: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, template: str = "v1",
+          max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT) -> Item:
+    """The judge item for one answer (`record`, with its `text`) to an item of any probe.
 
-    example: the Example of the item (E2E items do not carry the patient's annotated values, which the reference
-    needs); template: prompt text with placeholders {note}, {question}, {reference}, {reasoning}, {categories},
-    {choices}, or the name of a variant of TEMPLATES; steps: the steps the judge can name (the answer is one of
-    "none", these steps, or "other"). The prompt holds no field of the record but its text: the judge is blind to
-    the condition. The item records template and template_hash, and keeps which answer it judges in its reference.
+    template: prompt text with placeholders {task}, {reference}, {criterion}, {answer}, or the name of a variant of
+    TEMPLATES. The prompt holds the task, the reference, the grading rule of the probe (CRITERIA) and the answer:
+    nothing about the model or the condition evaluated. The id includes the template's hash, so that a resumed run
+    never reuses verdicts given to another prompt.
 
-    >>> ex = mk.data.demo()[1]
-    >>> item = build(mk.probes.end_to_end.build(ex), {"item_id": "demo:6:1:E2E", "text": "BMI = 70/1.75 = 40"},
-    ...              example=ex)
-    >>> item["probe"], item["reference"]["choices"]
-    ('judge', ['none', 'extraction', 'conversion', 'formula', 'substitution', 'arithmetic', 'other'])
+    >>> item = mk.probes.end_to_end.build(mk.data.demo()[1])
+    >>> j = build(item, {"item_id": item["item_id"], "text": '{"answer": 22.9}'})
+    >>> j["probe"], j["reference"]["graded_item_id"], j["item_id"].startswith("demo:6:1:E2E:judge:")
+    ('judge', 'demo:6:1:E2E', True)
     """
-    item_e2e = as_item(item_e2e)
-    record = dict(record)
-    if item_e2e.get("task", item_e2e["probe"]) != "E2E":
-        raise ValueError(f"the judge reads end-to-end answers, not {item_e2e['probe']} items")
-    if record.get("item_id", item_e2e["item_id"]) != item_e2e["item_id"]:
-        raise ValueError(f"record of {record.get('item_id')} does not answer {item_e2e['item_id']}")
-    ex = as_example(example)
-    steps = tuple(steps)
-    choices = _choices(steps)
-    categories = "\n".join(['- "none": every step is correct'] +
-                           [f'- "{s}": {STEP_DESCRIPTIONS.get(s, s)}' for s in steps] +
-                           ['- "other": an error that fits none of these steps'])
+    item, record = as_item(item), dict(record)
+    if record.get("item_id", item["item_id"]) != item["item_id"]:
+        raise ValueError(f"record of {record.get('item_id')} does not answer {item['item_id']}")
+    task = item.get("task", item["probe"])
+    if task not in CRITERIA:
+        raise ValueError(f"no grading rule for probe {task!r}")
     name, text = resolve_template(template, TEMPLATES)
-    user = render(text, note=ex.note, question=ex.question, reference=reference_text(ex, steps, digits),
-                  reasoning=record.get("text") or "", categories=categories, rules=JUDGING_RULES,
-                  choices=", ".join(f'"{c}"' for c in choices))
-    key = _record_key(record)
-    item = make_item(ex, "judge", user, {"judged_item_id": item_e2e["item_id"], "judged_record": key,
-                                         "choices": choices}, max_new_tokens, system_prompt, task="judge",
-                     template=(name, text))
-    # the template's hash is part of the id: after a change of the prompt, a resumed run judges again
-    item["item_id"] = f"{item_e2e['item_id']}:judge:{key}:{item['template_hash'][:6]}"
-    return item
+    user = render(text, task=item["messages"][-1]["content"], reference=reference_text(item),
+                  criterion=CRITERIA[task], answer=record.get("text") or "")
+    messages = ([{"role": "system", "content": system_prompt}] if system_prompt else []) + \
+        [{"role": "user", "content": user}]
+    key = template_hash(text)
+    return {"item_id": f"{item['item_id']}:judge:{_record_key(record)}:{key[:6]}", "example_id": item["example_id"],
+            "calculator_id": item["calculator_id"], "calculator_name": item.get("calculator_name", ""),
+            "probe": "judge", "task": "judge", "template": name, "template_hash": key, "messages": messages,
+            "max_new_tokens": max_new_tokens,
+            "reference": {"graded_item_id": item["item_id"], "graded_probe": item["probe"], "graded_task": task}}
 
 
-def parse(text: str, item: Item | None = None, steps: Iterable[str] = DEFAULT_STEPS) -> dict[str, Any]:
-    """Read a judge's answer: {"format_valid", "first_error", "evidence"}. An unreadable answer, or a first_error
-    outside the allowed choices (those of `item`, else "none", `steps`, "other"), gives first_error None.
+def parse(text: str) -> dict[str, Any]:
+    """Read a judge's answer: {"format_valid", "judge_correct", "reason"}; an unreadable answer gives
+    judge_correct None.
 
-    >>> parse('{"first_error": "formula", "evidence": "uses actual weight"}')["first_error"]
-    'formula'
-    >>> parse('{"first_error": "spelling"}'), parse("I think the formula is wrong.")["format_valid"]
-    ({'format_valid': False, 'first_error': None, 'evidence': None}, False)
+    >>> parse('{"verdict": "Incorrect", "reason": "13 is outside the interval"}')["judge_correct"]
+    False
+    >>> parse("The answer looks right.")
+    {'format_valid': False, 'judge_correct': None, 'reason': None}
     """
-    choices = item["reference"]["choices"] if item is not None else _choices(steps)
-    obj = extract_json(text, lenient=True)                  # judges quote reasoning, often with LaTeX backslashes
-    value = obj.get("first_error") if isinstance(obj, dict) else None
-    value = value.strip().lower() if isinstance(value, str) else None
-    if value not in choices:
-        return {"format_valid": False, "first_error": None, "evidence": None}
-    evidence = obj.get("evidence")
-    return {"format_valid": True, "first_error": value, "evidence": evidence if isinstance(evidence, str) else None}
+    obj = extract_json(text, lenient=True)                  # judges quote answers, often with LaTeX backslashes
+    verdict = obj.get("verdict") if isinstance(obj, dict) else None
+    verdict = verdict.strip().lower() if isinstance(verdict, str) else None
+    if verdict not in ("correct", "incorrect"):
+        return {"format_valid": False, "judge_correct": None, "reason": None}
+    reason = obj.get("reason")
+    return {"format_valid": True, "judge_correct": verdict == "correct",
+            "reason": reason if isinstance(reason, str) else None}
 
 
 def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path,
-             judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path,
-             template: str = "v1", steps: Iterable[str] = DEFAULT_STEPS, batch_size: int = 1,
-             model_id: str | None = None, max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS) -> pd.DataFrame:
-    """Have a judge annotate the E2E answers of `records`: one row per judged answer, with first_error and
-    evidence. Answers to items of calculators outside the registry, to other probes, or with an error are skipped.
+             judge_model: Any, *, out_path: str | Path, template: str = "v1", batch_size: int = 1,
+             max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS, model_id: str | None = None) -> pd.DataFrame:
+    """LLM evaluation of `records` (answers to `items`): one row per answer with the judge's verdict.
 
     judge_model: whatever run_items accepts (HFBackend, a function messages -> text, an API client wrapper);
-    dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items);
-    max_new_tokens: the judge's token budget (raise it for a judge that reasons at length, e.g. Qwen3's thinking).
-    Each row records judge_model_id, template and template_hash, the judged item and the evaluated model_id.
+    out_path: the judge's generations (resumable, like run_items); batch_size: 1 by default, so that a verdict never
+    depends on the other prompts of its batch (use HFBackend(..., deterministic=True) for a fully deterministic
+    judge). Each row records judge_model_id, judge_revision (the model's commit when known), template and
+    template_hash. Answers with an error, or to unknown items, are skipped.
 
     >>> import tempfile, pathlib
-    >>> ds = mk.data.demo()
-    >>> items = mk.ProbeSuite(["E2E"]).build(ds)
-    >>> records = [{"item_id": i, "model_id": "m", "text": '{"answer": 1}'} for i in items.item_id]
+    >>> items = mk.ProbeSuite(["A", "E2E"]).build(mk.data.demo())
+    >>> records = [{"item_id": i, "model_id": "m", "text": '{"answer": 12, "result": 12}'} for i in items.item_id]
     >>> def toy_judge(messages, max_new_tokens):
-    ...     return '{"first_error": "formula", "evidence": "answer 1"}'
+    ...     return '{"verdict": "correct", "reason": "matches"}'
     >>> out = pathlib.Path(tempfile.mkdtemp()) / "judge.jsonl"
-    >>> notes = annotate(items, records, toy_judge, dataset=ds, out_path=out)
-    >>> notes[["judged_item_id", "model_id", "first_error", "judge_model_id"]].head(2)
-      judged_item_id model_id first_error judge_model_id
-    0   demo:2:1:E2E        m     formula      toy_judge
-    1   demo:6:1:E2E        m     formula      toy_judge
+    >>> llm = annotate(items, records, toy_judge, out_path=out)
+    >>> llm[["item_id", "probe", "judge_correct", "judge_model_id"]].head(2)
+          item_id probe  judge_correct judge_model_id
+    0  demo:2:1:A     A           True      toy_judge
+    1  demo:6:1:A     A           True      toy_judge
     """
     by_id = {it["item_id"]: it for it in as_items(items)}
-    examples = {ex.example_id: ex for ex in (dataset if not isinstance(dataset, pd.DataFrame) else
-                                             MedCalcDataset(dataset))}
     if isinstance(records, (str, Path)):
         records = read_records(records)
-    judge_items, judged = [], {}
+    judge_items, graded = [], {}
     for rec in as_items(records):
         item = by_id.get(rec.get("item_id"))
-        if item is None or rec.get("error") or item.get("task", item["probe"]) != "E2E" \
-                or item["calculator_id"] not in CALCULATORS:
+        if item is None or rec.get("error") or item.get("task", item["probe"]) not in CRITERIA:
             continue
-        jitem = build(item, rec, example=examples[item["example_id"]], template=template, steps=steps,
-                      max_new_tokens=max_new_tokens)
-        if jitem["item_id"] not in judged:
+        jitem = build(item, rec, template=template, max_new_tokens=max_new_tokens)
+        if jitem["item_id"] not in graded:
             judge_items.append(jitem)
-            judged[jitem["item_id"]] = rec
+            graded[jitem["item_id"]] = (item, rec)
     judge_id = model_id or model_name(judge_model)
     run_items(judge_items, out_path, judge_model, model_id=judge_id, batch_size=batch_size)
     answers = {r["item_id"]: r for r in as_items(read_records(out_path)) if not r.get("error")}
@@ -256,53 +215,65 @@ def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Itera
         answer = answers.get(jitem["item_id"])
         if answer is None:
             continue
-        rec = judged[jitem["item_id"]]
-        rows.append({"judge_item_id": jitem["item_id"], "judged_item_id": jitem["reference"]["judged_item_id"],
-                     "example_id": jitem["example_id"], "calculator_id": jitem["calculator_id"],
-                     "model_id": rec.get("model_id"), **parse(answer.get("text") or "", jitem),
-                     "judge_model_id": answer.get("model_id"), "template": jitem["template"],
-                     "template_hash": jitem["template_hash"], "judge_text": answer.get("text")})
+        item, rec = graded[jitem["item_id"]]
+        rows.append({"item_id": item["item_id"], "probe": item["probe"], "task": item.get("task", item["probe"]),
+                     "example_id": item["example_id"], "calculator_id": item["calculator_id"],
+                     "model_id": rec.get("model_id"), **parse(answer.get("text") or ""),
+                     "judge_model_id": answer.get("model_id"), "judge_revision": getattr(judge_model, "revision", None),
+                     "template": jitem["template"], "template_hash": jitem["template_hash"],
+                     "judge_item_id": jitem["item_id"], "judge_text": answer.get("text")})
     return pd.DataFrame(rows)
 
 
-def agreement(annotations: pd.DataFrame | Iterable[str | None], human_labels: Mapping[str, str] | pd.Series |
-              pd.DataFrame | Iterable[str], *, key: str = "judge_item_id") -> dict[str, Any]:
-    """Agreement between the judge and human labels of first_error: raw agreement, Cohen's kappa, and the confusion
-    matrix (rows: human, columns: judge). Pairs where the judge's answer was unreadable are counted apart
-    (`n_unreadable`) and left out.
+def agreement(labels_a: Iterable[Any], labels_b: Iterable[Any]) -> dict[str, Any]:
+    """Agreement between two aligned sequences of labels: n, raw agreement, Cohen's kappa, confusion matrix (rows: a,
+    columns: b). Pairs with a missing label are left out (`n_missing`).
 
-    annotations: the DataFrame of annotate (matched to human_labels on `key`: a dict / Series indexed by it, or a
-    DataFrame with `key` and `first_error` columns), or a plain sequence of labels aligned with human_labels.
-
-    >>> judge_labels = ["formula", "formula", "arithmetic", "arithmetic"]
-    >>> r = agreement(judge_labels, ["formula", "arithmetic", "arithmetic", "arithmetic"])
+    >>> r = agreement(["x", "x", "y", "y"], ["x", "y", "y", "y"])
     >>> r["n"], r["agreement"], r["kappa"]
     (4, 0.75, 0.5)
-    >>> r["confusion"]
-    judge       arithmetic  formula
-    human
-    arithmetic           2        1
-    formula              0        1
     """
-    if isinstance(annotations, pd.DataFrame):
-        if isinstance(human_labels, pd.DataFrame):
-            human_labels = human_labels.set_index(key)["first_error"]
-        human = dict(human_labels)
-        pairs = [(human[k], j) for k, j in zip(annotations[key], annotations["first_error"]) if k in human]
-    else:
-        judge, human = list(annotations), list(human_labels)
-        if len(judge) != len(human):
-            raise ValueError("annotations and human_labels must have the same length")
-        pairs = list(zip(human, judge))
-    n_unreadable = sum(j is None or j != j for _, j in pairs)
-    pairs = [(h, j) for h, j in pairs if j is not None and j == j]
+    a, b = list(labels_a), list(labels_b)
+    if len(a) != len(b):
+        raise ValueError("the two sequences of labels must have the same length")
+    pairs = [(x, y) for x, y in zip(a, b) if x is not None and y is not None and x == x and y == y]
     if not pairs:
         raise ValueError("no pair of labels to compare")
-    df = pd.DataFrame(pairs, columns=["human", "judge"])
-    po = float((df.human == df.judge).mean())
-    ph, pj = df.human.value_counts(normalize=True), df.judge.value_counts(normalize=True)
-    pe = float(sum(ph.get(c, 0.0) * pj.get(c, 0.0) for c in set(ph.index) | set(pj.index)))
+    df = pd.DataFrame(pairs, columns=["a", "b"])
+    po = float((df.a == df.b).mean())
+    pa, pb = df.a.value_counts(normalize=True), df.b.value_counts(normalize=True)
+    pe = float(sum(pa.get(c, 0.0) * pb.get(c, 0.0) for c in set(pa.index) | set(pb.index)))
     kappa = 1.0 if pe == 1 else (po - pe) / (1 - pe)
-    confusion = pd.crosstab(df.human, df.judge)
-    return {"n": len(df), "n_unreadable": n_unreadable, "agreement": po, "kappa": round(kappa, 12),
-            "confusion": confusion}
+    return {"n": len(df), "n_missing": len(a) - len(df), "agreement": po, "kappa": round(kappa, 12),
+            "confusion": pd.crosstab(df.a, df.b)}
+
+
+def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = "task") -> pd.DataFrame:
+    """LLM evaluation against the automatic one, per probe (`by`: "task" or "probe") and overall: n, accuracy given
+    by each, agreement, Cohen's kappa, and the judge's errors: accepted while wrong (false acceptance rate, among the
+    answers the automatic scoring rejects) and rejected while right (false rejection rate, among those it accepts).
+
+    llm: the output of annotate; scores: score_records on the same answers (same item_id).
+
+    >>> scores = pd.DataFrame({"item_id": ["a", "b", "c", "d"], "task": "A", "correct": [True, True, False, False]})
+    >>> llm = pd.DataFrame({"item_id": ["a", "b", "c", "d"], "judge_correct": [True, False, False, False]})
+    >>> row = compare(llm, scores).loc["A"]
+    >>> row[["auto_accuracy", "llm_accuracy", "agreement", "kappa", "false_rejection"]].tolist()
+    [0.5, 0.25, 0.75, 0.5, 0.5]
+    """
+    cols = ["item_id", "correct", by] + (["model"] if "model" in scores and "model" not in llm else [])
+    merged = llm[["item_id", "judge_correct"]].merge(scores[cols], on="item_id")
+    rows = {}
+    groups = [(g, d) for g, d in merged.groupby(by, sort=False)] + [("all", merged)]
+    for name, d in groups:
+        read = d.dropna(subset=["judge_correct"])
+        auto, judge = read.correct.astype(bool), read.judge_correct.astype(bool)
+        r = agreement(list(auto), list(judge)) if len(read) else {"agreement": float("nan"), "kappa": float("nan")}
+        rows[name] = {"n": len(d), "unreadable": len(d) - len(read), "auto_accuracy": float(d.correct.mean()),
+                      "llm_accuracy": float(judge.mean()) if len(read) else float("nan"),
+                      "agreement": r["agreement"], "kappa": r["kappa"],
+                      "false_acceptance": float(judge[~auto].mean()) if (~auto).any() else float("nan"),
+                      "false_rejection": float((~judge[auto]).mean()) if auto.any() else float("nan")}
+    out = pd.DataFrame.from_dict(rows, orient="index")
+    out.index.name = by
+    return out.astype({"n": int, "unreadable": int})

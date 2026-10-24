@@ -22,7 +22,7 @@ See also the [user guide](guide.md) and the [calculator list](calculators.md).
 - [`medcalc_kit.generation`](#medcalc_kitgeneration): [`run_items`](#generationrun_items), [`read_records`](#generationread_records), [`done_item_ids`](#generationdone_item_ids), [`prompt_key`](#generationprompt_key), [`model_name`](#generationmodel_name), [`classify_generation`](#generationclassify_generation), [`is_degenerate`](#generationis_degenerate), [`CATEGORIES`](#generationcategories)
 - [`medcalc_kit.generation.artifacts`](#medcalc_kitgenerationartifacts): [`repeated_ngram_share`](#generationartifactsrepeated_ngram_share), [`max_line_repeats`](#generationartifactsmax_line_repeats)
 - [`medcalc_kit.generation.hf`](#medcalc_kitgenerationhf): [`HFBackend`](#generationhfhfbackend)
-- [`medcalc_kit.judge`](#medcalc_kitjudge): [`build`](#judgebuild), [`annotate`](#judgeannotate), [`parse`](#judgeparse), [`agreement`](#judgeagreement), [`reference_text`](#judgereference_text), [`TEMPLATES`](#judgetemplates), [`DEFAULT_STEPS`](#judgedefault_steps), [`DEFAULT_TEMPLATE`](#judgedefault_template)
+- [`medcalc_kit.judge`](#medcalc_kitjudge): [`annotate`](#judgeannotate), [`compare`](#judgecompare), [`build`](#judgebuild), [`parse`](#judgeparse), [`agreement`](#judgeagreement), [`reference_text`](#judgereference_text), [`CRITERIA`](#judgecriteria), [`TEMPLATES`](#judgetemplates), [`DEFAULT_TEMPLATE`](#judgedefault_template)
 - [`medcalc_kit.evaluate`](#medcalc_kitevaluate): [`score_records`](#evaluatescore_records), [`truncate_records`](#evaluatetruncate_records), [`summary`](#evaluatesummary), [`to_units`](#evaluateto_units), [`read_jsonl`](#evaluateread_jsonl)
 - [`medcalc_kit.expr`](#medcalc_kitexpr): [`evaluate`](#exprevaluate), [`parse`](#exprparse), [`variables`](#exprvariables), [`substitute`](#exprsubstitute), [`replace_vars`](#exprreplace_vars), [`to_str`](#exprto_str), [`canonical`](#exprcanonical), [`evaluate_condition`](#exprevaluate_condition), [`literals`](#exprliterals), [`map_literals`](#exprmap_literals), [`ExprError`](#exprexprerror), [`FUNCTIONS`](#exprfunctions)
 - [`medcalc_kit.units`](#medcalc_kitunits): [`convert`](#unitsconvert), [`concentration`](#unitsconcentration), [`clean_unit`](#unitsclean_unit), [`weight_kg`](#unitsweight_kg), [`height_cm`](#unitsheight_cm), [`age_years`](#unitsage_years), [`platelets_1e9_per_L`](#unitsplatelets_1e9_per_l), [`insulin_uIU_per_mL`](#unitsinsulin_uiu_per_ml), [`UnitError`](#unitsuniterror), [`MOLAR_MASS`](#unitsmolar_mass)
@@ -88,7 +88,7 @@ interruption to resume, or with `model=None` to rescore what was generated.
 ### `benchmark.evaluate_model`
 
 ```python
-def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'U', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None, items: pd.DataFrame | None = None) -> EvaluationReport
+def evaluate_model(model: Any, output_dir: str | Path | None = None, *, dataset: MedCalcDataset | None = None, split: str | Iterable[str] = 'test', per_calculator: int | None = None, seed: int = 0, steps: Iterable[str] = ('E', 'U', 'K', 'S', 'A'), k_mode: str = 'patient', k_pool: Any = 'auto', probe_options: Mapping[str, Mapping[str, Any]] | None = None, prompt_variants: int | Iterable[str] = 1, batch_size: int = 8, model_id: str | None = None, scoring: dict[str, dict[str, Any]] | None = None, items: pd.DataFrame | None = None, judge: Any = None, judge_options: Mapping[str, Any] | None = None) -> EvaluationReport
 ```
 
 Evaluate a model on MedCalc-Bench: the general score (end to end, all calculators) and the score of each step
@@ -113,6 +113,10 @@ batch_size, model_id: passed to run_items; scoring: passed to score_records.
 items:          items already built (e.g. ProbeSuite variants labelled "Kg", or read_items): evaluated as they
                 are, without building any; split, per_calculator, steps, k_mode, k_pool, probe_options and
                 prompt_variants then do not apply. Calculator categories come from `dataset` when given.
+judge:          an LLM to grade every answer as well (LLM evaluation, next to the automatic one): what run_items
+                accepts, e.g. HFBackend("Qwen/Qwen3-8B", deterministic=True). Its verdicts are in report.llm and
+                scores.judge_correct, compared with the automatic evaluation in report.llm_vs_auto.
+                judge_options: passed to judge.annotate (template, max_new_tokens, batch_size, model_id).
 
 ```python
 >>> def always_12(messages, max_new_tokens):
@@ -126,7 +130,7 @@ items:          items already built (e.g. ProbeSuite variants labelled "Kg", or 
 ### `benchmark.EvaluationReport`
 
 ```python
-class EvaluationReport(model: str, items: pd.DataFrame, scores: pd.DataFrame, output_dir: Path | None = None) -> None
+class EvaluationReport(model: str, items: pd.DataFrame, scores: pd.DataFrame, output_dir: Path | None = None, llm: pd.DataFrame | None = None) -> None
 ```
 
 Result of `evaluate_model`. Every view is a DataFrame; `scores` has one row per answer (score_records columns,
@@ -174,6 +178,9 @@ physical  2          1.0       1.0
 
 **`.by_label`** (property): Per item label (custom variants such as "Kg", paraphrases such as "K@v2"): n, well-formed, competence,
 accuracy.
+
+**`.llm_vs_auto`** (property): With an LLM judge: per probe and overall, the accuracy given by the automatic and the LLM evaluations, their
+agreement and kappa, and the judge's false acceptances and rejections (see judge.compare).
 
 #### `.save(directory: str | Path | None = None) -> Path`
 
@@ -2556,11 +2563,15 @@ Hugging Face transformers backend (optional dependency: pip install medcalc-kit[
 ### `generation.hf.HFBackend`
 
 ```python
-class HFBackend(model_id: str, device: str = 'cuda:0', dtype: str = 'bfloat16', chat_template_kwargs: dict[str, Any] | None = None)
+class HFBackend(model_id: str, device: str = 'cuda:0', dtype: str = 'bfloat16', chat_template_kwargs: dict[str, Any] | None = None, deterministic: bool = False)
 ```
 
 Loads a causal LM on one device and generates greedily with its chat template (left padding for
 batches). chat_template_kwargs: e.g. {"enable_thinking": False} for Qwen3. Needs `pip install medcalc-kit[hf]`.
+
+deterministic=True makes torch use deterministic algorithms: with greedy decoding and one prompt at a time
+(batch_size=1), the same prompt then always gives the same text on the same hardware and software. `revision` is
+the model's commit on the Hub (when known), to record exactly which model answered.
 
 ```python
 >>> from medcalc_kit.generation.hf import HFBackend
@@ -2570,7 +2581,7 @@ batches). chat_template_kwargs: e.g. {"enable_thinking": False} for Qwen3. Needs
 >>> mk.run_items(items, "outputs.jsonl", model, batch_size=16)
 ```
 
-#### `.from_model(model: Any, tokenizer: Any, *, chat_template_kwargs: dict[str, Any] | None = None, model_id: str | None = None) -> HFBackend`
+#### `.from_model(model: Any, tokenizer: Any, *, chat_template_kwargs: dict[str, Any] | None = None, model_id: str | None = None, deterministic: bool = False) -> HFBackend`
 
 Wrap a model already loaded (or modified, e.g. pruned or quantized) without loading it again.
 model_id defaults to the model's name_or_path; the tokenizer is set to left padding.
@@ -2601,155 +2612,158 @@ Greedy answer for one chat: (text, n_prompt_tokens, n_new_tokens).
 
 ## `medcalc_kit.judge`
 
-Optional LLM judge: a SECONDARY analysis of the free reasoning of end-to-end (E2E) answers.
+LLM evaluation: an LLM judge grades the answers, next to the automatic (deterministic) evaluation.
 
-The judge reads the patient note, the question, the full reference computation of the registry (values extracted,
-values in the formula's units, formula of the patient's branch, substituted expression, result) and the reasoning of
-the model evaluated, and names the first step that went wrong. It never replaces the deterministic scoring of the
-final answer (`probes.score`): use it to locate errors, and check it against human labels (`agreement`) first.
+For every answer, to any probe (E, U, K, S, A, E2E), the judge reads the task as the model received it, the
+reference answer from the registry, and the probe's grading rule, and says whether the answer is correct. For E2E it
+checks the final answer against the ground truth (within the benchmark's interval), like the automatic scoring.
 
-The judge is blind: its prompt holds nothing about the condition evaluated (model name, sparsity, method, metadata).
+The automatic evaluation stays the reference: `compare` measures, per probe, how often the judge agrees with it
+(agreement, Cohen's kappa, false acceptances and rejections), which tells how far the judge can be trusted, without
+human labels. The judge is blind (its prompt holds nothing about the model evaluated) and deterministic with greedy
+decoding, one prompt at a time (`batch_size=1`) and HFBackend(..., deterministic=True).
 
 ```python
->>> ex = mk.data.demo()[2]                                  # anion gap
->>> e2e = mk.probes.end_to_end.build(ex)
->>> record = {"item_id": e2e["item_id"], "model_id": "model-A", "text": "140 - 104 - 24 = 14. {\"answer\": 14}"}
->>> item = build(e2e, record, example=ex)
->>> "model-A" in item["messages"][-1]["content"]
+>>> items = mk.ProbeSuite(["A"]).build(mk.data.demo())
+>>> item = mk.probes.as_item(items.iloc[2])                 # anion gap: 140 - (104 + 24)
+>>> judge_item = build(item, {"item_id": item["item_id"], "model_id": "model-A", "text": '{"result": 12}'})
+>>> "model-A" in judge_item["messages"][-1]["content"]
 False
->>> parse('Checking each step... {"first_error": "arithmetic", "evidence": "= 14"}', item)
-{'format_valid': True, 'first_error': 'arithmetic', 'evidence': '= 14'}
-```
-
-### `judge.build`
-
-```python
-def build(item_e2e: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, example: Example | dict[str, Any], template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), max_new_tokens: int = 1024, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, digits: int = 6) -> Item
-```
-
-The judge item for one answer (`record`, with its `text`) to an E2E item.
-
-example: the Example of the item (E2E items do not carry the patient's annotated values, which the reference
-needs); template: prompt text with placeholders {note}, {question}, {reference}, {reasoning}, {categories},
-{choices}, or the name of a variant of TEMPLATES; steps: the steps the judge can name (the answer is one of
-"none", these steps, or "other"). The prompt holds no field of the record but its text: the judge is blind to
-the condition. The item records template and template_hash, and keeps which answer it judges in its reference.
-
-```python
->>> ex = mk.data.demo()[1]
->>> item = build(mk.probes.end_to_end.build(ex), {"item_id": "demo:6:1:E2E", "text": "BMI = 70/1.75 = 40"},
-...              example=ex)
->>> item["probe"], item["reference"]["choices"]
-('judge', ['none', 'extraction', 'conversion', 'formula', 'substitution', 'arithmetic', 'other'])
+>>> parse('The value matches. {"verdict": "correct", "reason": "12 equals the reference"}')
+{'format_valid': True, 'judge_correct': True, 'reason': '12 equals the reference'}
 ```
 
 ### `judge.annotate`
 
 ```python
-def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path, judge_model: Any, *, dataset: MedCalcDataset | Iterable[Example], out_path: str | Path, template: str = 'v1', steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), batch_size: int = 1, model_id: str | None = None, max_new_tokens: int = 1024) -> pd.DataFrame
+def annotate(items: pd.DataFrame | Iterable[Item], records: pd.DataFrame | Iterable[Mapping[str, Any]] | str | Path, judge_model: Any, *, out_path: str | Path, template: str = 'v1', batch_size: int = 1, max_new_tokens: int = 512, model_id: str | None = None) -> pd.DataFrame
 ```
 
-Have a judge annotate the E2E answers of `records`: one row per judged answer, with first_error and
-evidence. Answers to items of calculators outside the registry, to other probes, or with an error are skipped.
+LLM evaluation of `records` (answers to `items`): one row per answer with the judge's verdict.
 
 judge_model: whatever run_items accepts (HFBackend, a function messages -> text, an API client wrapper);
-dataset: the examples of the items; out_path: the judge's generations (resumable, like run_items);
-max_new_tokens: the judge's token budget (raise it for a judge that reasons at length, e.g. Qwen3's thinking).
-Each row records judge_model_id, template and template_hash, the judged item and the evaluated model_id.
+out_path: the judge's generations (resumable, like run_items); batch_size: 1 by default, so that a verdict never
+depends on the other prompts of its batch (use HFBackend(..., deterministic=True) for a fully deterministic
+judge). Each row records judge_model_id, judge_revision (the model's commit when known), template and
+template_hash. Answers with an error, or to unknown items, are skipped.
 
 ```python
 >>> import tempfile, pathlib
->>> ds = mk.data.demo()
->>> items = mk.ProbeSuite(["E2E"]).build(ds)
->>> records = [{"item_id": i, "model_id": "m", "text": '{"answer": 1}'} for i in items.item_id]
+>>> items = mk.ProbeSuite(["A", "E2E"]).build(mk.data.demo())
+>>> records = [{"item_id": i, "model_id": "m", "text": '{"answer": 12, "result": 12}'} for i in items.item_id]
 >>> def toy_judge(messages, max_new_tokens):
-...     return '{"first_error": "formula", "evidence": "answer 1"}'
+...     return '{"verdict": "correct", "reason": "matches"}'
 >>> out = pathlib.Path(tempfile.mkdtemp()) / "judge.jsonl"
->>> notes = annotate(items, records, toy_judge, dataset=ds, out_path=out)
->>> notes[["judged_item_id", "model_id", "first_error", "judge_model_id"]].head(2)
-  judged_item_id model_id first_error judge_model_id
-0   demo:2:1:E2E        m     formula      toy_judge
-1   demo:6:1:E2E        m     formula      toy_judge
+>>> llm = annotate(items, records, toy_judge, out_path=out)
+>>> llm[["item_id", "probe", "judge_correct", "judge_model_id"]].head(2)
+      item_id probe  judge_correct judge_model_id
+0  demo:2:1:A     A           True      toy_judge
+1  demo:6:1:A     A           True      toy_judge
+```
+
+### `judge.compare`
+
+```python
+def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = 'task') -> pd.DataFrame
+```
+
+LLM evaluation against the automatic one, per probe (`by`: "task" or "probe") and overall: n, accuracy given
+by each, agreement, Cohen's kappa, and the judge's errors: accepted while wrong (false acceptance rate, among the
+answers the automatic scoring rejects) and rejected while right (false rejection rate, among those it accepts).
+
+llm: the output of annotate; scores: score_records on the same answers (same item_id).
+
+```python
+>>> scores = pd.DataFrame({"item_id": ["a", "b", "c", "d"], "task": "A", "correct": [True, True, False, False]})
+>>> llm = pd.DataFrame({"item_id": ["a", "b", "c", "d"], "judge_correct": [True, False, False, False]})
+>>> row = compare(llm, scores).loc["A"]
+>>> row[["auto_accuracy", "llm_accuracy", "agreement", "kappa", "false_rejection"]].tolist()
+[0.5, 0.25, 0.75, 0.5, 0.5]
+```
+
+### `judge.build`
+
+```python
+def build(item: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, template: str = 'v1', max_new_tokens: int = 512, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT) -> Item
+```
+
+The judge item for one answer (`record`, with its `text`) to an item of any probe.
+
+template: prompt text with placeholders {task}, {reference}, {criterion}, {answer}, or the name of a variant of
+TEMPLATES. The prompt holds the task, the reference, the grading rule of the probe (CRITERIA) and the answer:
+nothing about the model or the condition evaluated. The id includes the template's hash, so that a resumed run
+never reuses verdicts given to another prompt.
+
+```python
+>>> item = mk.probes.end_to_end.build(mk.data.demo()[1])
+>>> j = build(item, {"item_id": item["item_id"], "text": '{"answer": 22.9}'})
+>>> j["probe"], j["reference"]["graded_item_id"], j["item_id"].startswith("demo:6:1:E2E:judge:")
+('judge', 'demo:6:1:E2E', True)
 ```
 
 ### `judge.parse`
 
 ```python
-def parse(text: str, item: Item | None = None, steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic')) -> dict[str, Any]
+def parse(text: str) -> dict[str, Any]
 ```
 
-Read a judge's answer: {"format_valid", "first_error", "evidence"}. An unreadable answer, or a first_error
-outside the allowed choices (those of `item`, else "none", `steps`, "other"), gives first_error None.
+Read a judge's answer: {"format_valid", "judge_correct", "reason"}; an unreadable answer gives
+judge_correct None.
 
 ```python
->>> parse('{"first_error": "formula", "evidence": "uses actual weight"}')["first_error"]
-'formula'
->>> parse('{"first_error": "spelling"}'), parse("I think the formula is wrong.")["format_valid"]
-({'format_valid': False, 'first_error': None, 'evidence': None}, False)
+>>> parse('{"verdict": "Incorrect", "reason": "13 is outside the interval"}')["judge_correct"]
+False
+>>> parse("The answer looks right.")
+{'format_valid': False, 'judge_correct': None, 'reason': None}
 ```
 
 ### `judge.agreement`
 
 ```python
-def agreement(annotations: pd.DataFrame | Iterable[str | None], human_labels: Mapping[str, str] | pd.Series | pd.DataFrame | Iterable[str], *, key: str = 'judge_item_id') -> dict[str, Any]
+def agreement(labels_a: Iterable[Any], labels_b: Iterable[Any]) -> dict[str, Any]
 ```
 
-Agreement between the judge and human labels of first_error: raw agreement, Cohen's kappa, and the confusion
-matrix (rows: human, columns: judge). Pairs where the judge's answer was unreadable are counted apart
-(`n_unreadable`) and left out.
-
-annotations: the DataFrame of annotate (matched to human_labels on `key`: a dict / Series indexed by it, or a
-DataFrame with `key` and `first_error` columns), or a plain sequence of labels aligned with human_labels.
+Agreement between two aligned sequences of labels: n, raw agreement, Cohen's kappa, confusion matrix (rows: a,
+columns: b). Pairs with a missing label are left out (`n_missing`).
 
 ```python
->>> judge_labels = ["formula", "formula", "arithmetic", "arithmetic"]
->>> r = agreement(judge_labels, ["formula", "arithmetic", "arithmetic", "arithmetic"])
+>>> r = agreement(["x", "x", "y", "y"], ["x", "y", "y", "y"])
 >>> r["n"], r["agreement"], r["kappa"]
 (4, 0.75, 0.5)
->>> r["confusion"]
-judge       arithmetic  formula
-human
-arithmetic           2        1
-formula              0        1
 ```
 
 ### `judge.reference_text`
 
 ```python
-def reference_text(example: Example | dict[str, Any], steps: Iterable[str] = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic'), digits: int = 6) -> str
+def reference_text(item: Item | pd.Series) -> str
 ```
 
-The registry's computation for an example, one block per step, as shown to the judge.
+The reference answer of an item, as the judge reads it.
 
 ```python
->>> print(reference_text(mk.data.demo()[1]))
-Values in the note:
-- weight: 70 kg
-- height: 175 cm
-Values in the units of the formula:
-- weight = 70 (body weight (kg))
-- height = 175 (height (cm))
-Formula (branch for this patient): bmi = weight / (height / 100)^2
-Substituted expression: 70 / (175 / 100)^2
-Result: 22.86
+>>> ds = mk.data.demo()
+>>> reference_text(mk.probes.arithmetic.build(ds[2])), reference_text(mk.probes.end_to_end.build(ds[2]))
+('12', '12 (accepted interval: 11.4 to 12.6)')
+>>> reference_text(mk.probes.knowledge.build(ds[1], mode="patient"))
+'bmi = weight / (height / 100)^2'
+```
+
+### `judge.CRITERIA`
+
+```python
+CRITERIA = {'E': 'Correct only if every field has the reference value: numbers may be given in another unit that converts to the reference value (1 % tolerance), and a field absent from the reference must be reported as not mentioned (null or false).', 'U': 'Correct if the converted value is within 1 % of the reference value, in the requested unit.', 'K': "Correct if the formula, written with the variable na ...
 ```
 
 ### `judge.TEMPLATES`
 
 ```python
-TEMPLATES = {'v1': 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\n{rules}\n\nQuote a short passage of the r ...
-```
-
-### `judge.DEFAULT_STEPS`
-
-```python
-DEFAULT_STEPS = ('extraction', 'conversion', 'formula', 'substitution', 'arithmetic')
+TEMPLATES = {'v1': 'You grade the answer of an assistant to a clinical calculation task, against the reference answer.\n\nTask given to the assistant:\n<<<\n{task}\n>>>\n\nReference answer: {reference}\n\nGrading rule: {criterion}\n\nAssistant\'s answer:\n<<<\n{answer}\n>>>\n\nDecide whether the assistant\'s final answer is correct according to the grading rule. End your answer with a JSON object of the form  ...
 ```
 
 ### `judge.DEFAULT_TEMPLATE`
 
 ```python
-DEFAULT_TEMPLATE = 'You check the reasoning of an assistant who answered a clinical calculation question.\n\nPatient note:\n{note}\n\nQuestion: {question}\n\nReference computation (correct):\n{reference}\n\nReasoning to check:\n<<<\n{reasoning}\n>>>\n\nCompare the reasoning with the reference, step by step, and name the FIRST step where it goes wrong:\n{categories}\n\n{rules}\n\nQuote a short passage of the reasonin ...
+DEFAULT_TEMPLATE = 'You grade the answer of an assistant to a clinical calculation task, against the reference answer.\n\nTask given to the assistant:\n<<<\n{task}\n>>>\n\nReference answer: {reference}\n\nGrading rule: {criterion}\n\nAssistant\'s answer:\n<<<\n{answer}\n>>>\n\nDecide whether the assistant\'s final answer is correct according to the grading rule. End your answer with a JSON object of the form {"verdi ...
 ```
 
 

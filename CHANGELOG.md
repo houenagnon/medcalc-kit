@@ -15,9 +15,15 @@ mk.data.demo() against a frozen snapshot.
   with a convertible value (24 of the 33 equation-based calculators). `units.convert` for linear conversions.
 - S+U: `substitution.build(value_units={variable: unit})` gives some values in another unit; numbers are matched
   within DEFAULT_CONVERTED_REL_TOL; new error `unconverted_value`.
-- `medcalc_kit.judge`: an optional, blind LLM judge of the free reasoning of E2E answers (first wrong step, with
-  evidence), resumable `annotate`, and `agreement` (raw agreement, Cohen's kappa, confusion matrix) with human
-  labels. A secondary analysis that never replaces the deterministic scoring.
+- LLM evaluation, next to the automatic one: `medcalc_kit.judge` grades every answer (all probes; for E2E the final
+  answer against the ground truth) from the task, the registry's reference and the probe's grading rule
+  (`CRITERIA`); `annotate` (resumable, one prompt at a time), `compare` (per probe: both accuracies, agreement,
+  kappa, false acceptances and rejections), `agreement`. `evaluate_model(judge=...)` adds `report.llm`,
+  `report.llm_vs_auto` and `scores.judge_correct`. The judge is blind to the model evaluated.
+- `HFBackend(deterministic=True)` (deterministic torch kernels) and `HFBackend.revision` (the model's commit,
+  recorded with each verdict); `extract_json(lenient=True)` reads JSON with LaTeX backslashes (used by the judge).
+- `accelerate` is part of the `hf` extra (needed by `device_map`); `environment.yml` and `examples/README.md` to run
+  the notebooks locally.
 - E2E interventions: `end_to_end.build(provide=("values", "formula"))` adds the correct values and/or formula of
   the patient's branch; labels E2E+V, E2E+F, E2E+VF.
 - `evaluate_model(items=...)` evaluates items already built; `EvaluationReport.by_label` (custom labels such as Kg,

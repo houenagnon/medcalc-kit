@@ -133,8 +133,9 @@ mk.score(item, model_text)                      # {'format_valid', 'correct', 'e
   without generating again.
 - `end_to_end.build(ex, provide=("values", "formula"))`: interventions that give the model the correct values and/or
   formula (labels `E2E+V`, `E2E+F`, `E2E+VF`), to measure what each step costs end to end.
-- `mk.judge.annotate(...)`: an optional, blind LLM judge that names the first wrong step of a free reasoning, with
-  `mk.judge.agreement` against human labels. A secondary analysis: final answers are always scored deterministically.
+- `mk.evaluate_model(model, judge=judge_model)`: an LLM evaluation next to the automatic one. A blind, deterministic
+  LLM judge grades every answer against the registry's reference (for E2E, the final answer against the ground
+  truth); `report.llm_vs_auto` gives, per probe, both accuracies, their agreement and the judge's errors.
 - `HFBackend.from_model(model, tokenizer)`: evaluate a model modified in memory (pruned, quantized) without reloading.
 
 Each answer is first classified as `empty`, `truncated`, `degenerate` (looping), `format_invalid` or
@@ -164,7 +165,7 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 | `medcalc_kit.probes` | `extraction`, `conversion`, `knowledge`, `substitution`, `arithmetic`, `end_to_end` (each: `build`, `score`, `reference_answer`), `ProbeSuite`, `score`, `prompt`, `read_items` / `write_items` |
 | `medcalc_kit.generation` | `run_items`, `read_records`, `classify_generation`; `generation.hf.HFBackend` |
 | `medcalc_kit.evaluate` | `score_records`, `truncate_records`, `summary`, `to_units` |
-| `medcalc_kit.judge` | `annotate`, `agreement`, `build`, `parse` (optional LLM judge, secondary analysis) |
+| `medcalc_kit.judge` | `annotate`, `compare`, `agreement`, `build`, `parse` (LLM evaluation, next to the automatic one) |
 | `medcalc_kit.expr`, `units`, `parsing` | safe expression parser/evaluator, unit conversions, JSON / number extraction |
 
 ## Conventions and known deviations
