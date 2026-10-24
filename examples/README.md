@@ -3,8 +3,7 @@
 | notebook | what it shows | needs |
 |---|---|---|
 | [`tutorial.ipynb`](tutorial.ipynb) | the whole library, step by step: data and splits, the registry, every probe (E, U, K, S, A, E2E), a real model, the report, further analyses | the dataset download; a GPU for the model (else a simulated model) |
-| [`evaluate_model.ipynb`](evaluate_model.ipynb) | `evaluate_model` in one call: general score, score of each step, robustness to the wording of the prompts | a GPU |
-| [`judge_validation.ipynb`](judge_validation.ipynb) | a real LLM judge on end-to-end reasoning, and the blind sheet to validate it against your own labels | a GPU; run `evaluate_model.ipynb` first |
+| [`evaluate_model.ipynb`](evaluate_model.ipynb) | `evaluate_model` in one call: general score, score of each step, robustness to the wording of the prompts, and the LLM evaluation (a deterministic judge) next to the automatic one | a GPU |
 | [`quickstart.ipynb`](quickstart.ipynb) | a short tour | the dataset download |
 
 ## Running them locally
@@ -28,5 +27,4 @@ jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeou
 ```
 
 Models and the dataset are downloaded once into the Hugging Face cache (`~/.cache/huggingface`); Llama models need an
-accepted licence and `huggingface-cli login`. Everything the notebooks write (generations, reports, the judge's labelling
-sheet) goes to `examples/outputs/`, which git ignores: it contains benchmark notes, which are not redistributed.
+accepted licence and `huggingface-cli login`. Everything the notebooks write (generations, reports, the judge's verdicts) goes to `examples/outputs/`, which git ignores: it contains benchmark notes, which are not redistributed.
