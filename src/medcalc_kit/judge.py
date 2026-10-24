@@ -42,8 +42,9 @@ FORMAT_NOTE = (" Grade the content of the final answer; a small format slip (a m
                "matter.")
 CRITERIA = {
     "E": ("Correct only if every field has the reference value: numbers may be given in another unit that converts to "
-          "the reference value (1 % tolerance); a drug may be named without its route (IV, PO); a field absent from "
-          "the reference must be reported as not mentioned (null or false)."),
+          "the reference value (1 % tolerance), and may be written as text (\"7.25\" or \"7.25 mg\"); a drug may be "
+          "named without its route (IV, PO); a field absent from the reference must be reported as not mentioned "
+          "(null or false)."),
     "U": "Correct if the converted value is within the accepted range of the reference, in the requested unit.",
     "K": ("Correct if the formula, written with the variable names, gives the reference formula's value for this "
           "patient and is mathematically equivalent to it (rearranged terms, other notation, or unit conversions "

@@ -2754,7 +2754,7 @@ The reference answer of an item, as the judge reads it.
 ### `judge.CRITERIA`
 
 ```python
-CRITERIA = {'E': 'Correct only if every field has the reference value: numbers may be given in another unit that converts to the reference value (1 % tolerance); a drug may be named without its route (IV, PO); a field absent from the reference must be reported as not mentioned (null or false).', 'U': 'Correct if the converted value is within the accepted range of the reference, in the requested unit.', 'K':  ...
+CRITERIA = {'E': 'Correct only if every field has the reference value: numbers may be given in another unit that converts to the reference value (1 % tolerance), and may be written as text ("7.25" or "7.25 mg"); a drug may be named without its route (IV, PO); a field absent from the reference must be reported as not mentioned (null or false).', 'U': 'Correct if the converted value is within the accepted rang ...
 ```
 
 ### `judge.TEMPLATES`
