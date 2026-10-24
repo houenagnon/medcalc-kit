@@ -2670,6 +2670,9 @@ def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = 'task') -> pd.Dat
 LLM evaluation against the automatic one, per probe (`by`: "task" or "probe") and overall: n, accuracy given
 by each, agreement, Cohen's kappa, and the judge's errors: accepted while wrong (false acceptance rate, among the
 answers the automatic scoring rejects) and rejected while right (false rejection rate, among those it accepts).
+With a `well_formed` column in scores, agreement_well_formed and kappa_well_formed compare the two on the
+answers in the expected format only: the content, apart from format failures (which only the automatic
+evaluation counts).
 
 llm: the output of annotate; scores: score_records on the same answers (same item_id).
 
@@ -2743,7 +2746,7 @@ The reference answer of an item, as the judge reads it.
 ```python
 >>> ds = mk.data.demo()
 >>> reference_text(mk.probes.arithmetic.build(ds[2])), reference_text(mk.probes.end_to_end.build(ds[2]))
-('12', '12 (accepted interval: 11.4 to 12.6)')
+('12 (accepted range: 11.88 to 12.12)', '12 (accepted interval: 11.4 to 12.6)')
 >>> reference_text(mk.probes.knowledge.build(ds[1], mode="patient"))
 'bmi = weight / (height / 100)^2'
 ```
@@ -2751,7 +2754,7 @@ The reference answer of an item, as the judge reads it.
 ### `judge.CRITERIA`
 
 ```python
-CRITERIA = {'E': 'Correct only if every field has the reference value: numbers may be given in another unit that converts to the reference value (1 % tolerance), and a field absent from the reference must be reported as not mentioned (null or false).', 'U': 'Correct if the converted value is within 1 % of the reference value, in the requested unit.', 'K': "Correct if the formula, written with the variable na ...
+CRITERIA = {'E': 'Correct only if every field has the reference value: numbers may be given in another unit that converts to the reference value (1 % tolerance); a drug may be named without its route (IV, PO); a field absent from the reference must be reported as not mentioned (null or false).', 'U': 'Correct if the converted value is within the accepted range of the reference, in the requested unit.', 'K':  ...
 ```
 
 ### `judge.TEMPLATES`

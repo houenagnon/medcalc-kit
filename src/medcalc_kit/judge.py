@@ -36,17 +36,21 @@ DEFAULT_MAX_NEW_TOKENS = 512
 DEFAULT_SYSTEM_PROMPT = "You are a meticulous grader of clinical calculations."
 
 # The grading rule of each probe, as the judge reads it (the same rules as the automatic scoring).
+# Every rule grades the content of the final answer: answer format is measured apart (well_formed), so a small slip
+# (a misplaced quote or brace) must not decide the verdict.
+FORMAT_NOTE = (" Grade the content of the final answer; a small format slip (a misplaced quote or brace) does not "
+               "matter.")
 CRITERIA = {
     "E": ("Correct only if every field has the reference value: numbers may be given in another unit that converts to "
-          "the reference value (1 % tolerance), and a field absent from the reference must be reported as not "
-          "mentioned (null or false)."),
-    "U": "Correct if the converted value is within 1 % of the reference value, in the requested unit.",
+          "the reference value (1 % tolerance); a drug may be named without its route (IV, PO); a field absent from "
+          "the reference must be reported as not mentioned (null or false)."),
+    "U": "Correct if the converted value is within the accepted range of the reference, in the requested unit.",
     "K": ("Correct if the formula, written with the variable names, gives the reference formula's value for this "
           "patient and is mathematically equivalent to it (rearranged terms, other notation, or unit conversions "
           "written inside the formula are fine). A number instead of a formula is incorrect."),
     "S": ("Correct if the answer is the given formula with each variable replaced by its value and nothing computed or "
           "simplified; the order of terms may differ. A partly computed expression is incorrect."),
-    "A": "Correct if the result is within 1 % of the reference value.",
+    "A": "Correct if the result is within the accepted range of the reference.",
     "E2E": ("Correct if the final answer is within the reference interval (for a date or a duration: exactly the "
             "reference). Only the final answer is graded, not the reasoning."),
 }
@@ -83,7 +87,7 @@ def reference_text(item: Item | pd.Series) -> str:
 
     >>> ds = mk.data.demo()
     >>> reference_text(mk.probes.arithmetic.build(ds[2])), reference_text(mk.probes.end_to_end.build(ds[2]))
-    ('12', '12 (accepted interval: 11.4 to 12.6)')
+    ('12 (accepted range: 11.88 to 12.12)', '12 (accepted interval: 11.4 to 12.6)')
     >>> reference_text(mk.probes.knowledge.build(ds[1], mode="patient"))
     'bmi = weight / (height / 100)^2'
     """
@@ -94,8 +98,14 @@ def reference_text(item: Item | pd.Series) -> str:
             return str(ref["ground_truth"])
         return f"{ref['ground_truth']:.6g} (accepted interval: {ref['lower']:.6g} to {ref['upper']:.6g})"
     if task in ("A", "U"):
+        # the accepted range is given, so the judge compares numbers instead of computing a percentage
+        from medcalc_kit.probes import arithmetic, conversion
+
+        tol = arithmetic.DEFAULT_REL_TOL if task == "A" else conversion.DEFAULT_REL_TOL
+        gold = ref["gold_value"]
+        lo, hi = sorted((gold * (1 - tol), gold * (1 + tol)))
         unit = f" {ref['target_unit']}" if task == "U" else ""
-        return f"{ref['gold_value']:.6g}{unit}"
+        return f"{gold:.6g}{unit} (accepted range: {lo:.6g} to {hi:.6g})"
     if task == "S":
         return ref["gold_expression"]
     if task == "K":
@@ -142,7 +152,7 @@ def build(item: Item | pd.Series, record: Mapping[str, Any] | pd.Series, *, temp
         raise ValueError(f"no grading rule for probe {task!r}")
     name, text = resolve_template(template, TEMPLATES)
     user = render(text, task=item["messages"][-1]["content"], reference=reference_text(item),
-                  criterion=CRITERIA[task], answer=record.get("text") or "")
+                  criterion=CRITERIA[task] + FORMAT_NOTE, answer=record.get("text") or "")
     messages = ([{"role": "system", "content": system_prompt}] if system_prompt else []) + \
         [{"role": "user", "content": user}]
     key = template_hash(text)
@@ -252,6 +262,9 @@ def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = "task") -> pd.Dat
     """LLM evaluation against the automatic one, per probe (`by`: "task" or "probe") and overall: n, accuracy given
     by each, agreement, Cohen's kappa, and the judge's errors: accepted while wrong (false acceptance rate, among the
     answers the automatic scoring rejects) and rejected while right (false rejection rate, among those it accepts).
+    With a `well_formed` column in scores, agreement_well_formed and kappa_well_formed compare the two on the
+    answers in the expected format only: the content, apart from format failures (which only the automatic
+    evaluation counts).
 
     llm: the output of annotate; scores: score_records on the same answers (same item_id).
 
@@ -261,7 +274,7 @@ def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = "task") -> pd.Dat
     >>> row[["auto_accuracy", "llm_accuracy", "agreement", "kappa", "false_rejection"]].tolist()
     [0.5, 0.25, 0.75, 0.5, 0.5]
     """
-    cols = ["item_id", "correct", by] + (["model"] if "model" in scores and "model" not in llm else [])
+    cols = ["item_id", "correct", by] + (["well_formed"] if "well_formed" in scores else [])
     merged = llm[["item_id", "judge_correct"]].merge(scores[cols], on="item_id")
     rows = {}
     groups = [(g, d) for g, d in merged.groupby(by, sort=False)] + [("all", merged)]
@@ -274,6 +287,12 @@ def compare(llm: pd.DataFrame, scores: pd.DataFrame, by: str = "task") -> pd.Dat
                       "agreement": r["agreement"], "kappa": r["kappa"],
                       "false_acceptance": float(judge[~auto].mean()) if (~auto).any() else float("nan"),
                       "false_rejection": float((~judge[auto]).mean()) if auto.any() else float("nan")}
+        if "well_formed" in read:
+            wf = read[read.well_formed.astype(bool)]
+            r = agreement(list(wf.correct.astype(bool)), list(wf.judge_correct.astype(bool))) if len(wf) else \
+                {"agreement": float("nan"), "kappa": float("nan")}
+            rows[name].update(n_well_formed=len(wf), agreement_well_formed=r["agreement"],
+                              kappa_well_formed=r["kappa"])
     out = pd.DataFrame.from_dict(rows, orient="index")
     out.index.name = by
     return out.astype({"n": int, "unreadable": int})
