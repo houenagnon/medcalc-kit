@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0 — unreleased
+Default items (messages, references) and verdicts are unchanged: tests/test_regression.py checks them on
+mk.data.demo() against a frozen snapshot.
+- Fix: the error type of an E answer with tied field errors depended on the process's hash seed; ties now go to the
+  first field, so E scoring is deterministic across runs.
+- K: `min_pass_rate` (DEFAULT_MIN_PASS_RATE = 1.0) accepts a formula right at the patient's point and at that share
+  of the test points.
+- `evaluate.truncate_records(records, items, budgets, tokenizer)`: simulate a smaller token budget on saved answers;
+  `score_records` uses a record's own `max_new_tokens` when present.
+- New probe U (`probes.conversion`): one patient value given in another plausible unit (`UNIT_TABLE`, drawn
+  reproducibly), to convert to the unit of the registry's formula; errors `unconverted`, `inverse_factor`,
+  `wrong_value`. In PROBES and STEP_PROBES (E, U, K, S, A), built by ProbeSuite and evaluate_model for the examples
+  with a convertible value (24 of the 33 equation-based calculators). `units.convert` for linear conversions.
+- S+U: `substitution.build(value_units={variable: unit})` gives some values in another unit; numbers are matched
+  within DEFAULT_CONVERTED_REL_TOL; new error `unconverted_value`.
+- `medcalc_kit.judge`: an optional, blind LLM judge of the free reasoning of E2E answers (first wrong step, with
+  evidence), resumable `annotate`, and `agreement` (raw agreement, Cohen's kappa, confusion matrix) with human
+  labels. A secondary analysis that never replaces the deterministic scoring.
+- E2E interventions: `end_to_end.build(provide=("values", "formula"))` adds the correct values and/or formula of
+  the patient's branch; labels E2E+V, E2E+F, E2E+VF.
+- `evaluate_model(items=...)` evaluates items already built; `EvaluationReport.by_label` (custom labels such as Kg,
+  paraphrases); the views use the label named after each task.
+- `HFBackend.from_model(model, tokenizer)` wraps a model already loaded or modified, without loading it again.
+
 ## 0.4.0 — unreleased
 An evaluator of MedCalc-Bench, overall and step by step.
 - `mk.evaluate_model(model)`: builds every item, generates (resumable), scores, and returns an `EvaluationReport`:

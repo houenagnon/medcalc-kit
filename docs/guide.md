@@ -9,23 +9,25 @@ This guide explains how medcalc-kit works and how to use it. Function signatures
 - [2. Evaluating a model](#2-evaluating-a-model)
 - [3. Working with the benchmark and splits](#3-working-with-the-benchmark-and-splits)
 - [4. The objects you handle](#4-the-objects-you-handle)
-- [5. The five probes](#5-the-five-probes)
+- [5. The probes](#5-the-probes)
 - [6. Generation artifacts](#6-generation-artifacts)
 - [7. Using your own model](#7-using-your-own-model)
 - [8. Comparing models and conditions](#8-comparing-models-and-conditions)
 - [9. Customising prompts and scoring](#9-customising-prompts-and-scoring)
 - [10. Prompt design and robustness](#10-prompt-design-and-robustness)
-- [11. Good practices](#11-good-practices)
-- [12. Troubleshooting](#12-troubleshooting)
+- [11. Further analyses](#11-further-analyses)
+- [12. Good practices](#12-good-practices)
+- [13. Troubleshooting](#13-troubleshooting)
 
 ## 1. The idea
 
 MedCalc-Bench asks a model to read a patient note and compute a clinical value (creatinine clearance, anion gap,
-QTc…). A wrong answer can come from four different failures, and the end-to-end score cannot tell them apart:
+QTc…). A wrong answer can come from five different failures, and the end-to-end score cannot tell them apart:
 
 | competence | probe | the model is given… | it must… |
 |---|---|---|---|
 | finding the values | **E** extraction | the note and the list of fields | report each value with its unit as written |
+| converting units | **U** conversion | one value in another unit, and the formula's unit | convert it |
 | knowing the formula | **K** knowledge | the question and the variables (no values) | write the formula, one case per branch |
 | plugging values in | **S** substitution | the formula and the values | substitute, without computing |
 | computing | **A** arithmetic | the fully substituted expression | compute it |
@@ -39,7 +41,7 @@ So the kit evaluates a model at two levels:
 
 - **general**: the original task (E2E) on the whole benchmark, 55 calculators and 1,100 test examples (equations,
   rule-based scores such as CHA2DS2-VASc, and dates), comparable with published MedCalc-Bench results;
-- **step by step**: E, K, S and A on the 33 equation-based calculators (660 test examples), the only ones whose
+- **step by step**: E, U, K, S and A on the 33 equation-based calculators (660 test examples), the only ones whose
   calculation can be split into steps, with E2E on the same examples to see where the chain breaks.
 
 ## 2. Evaluating a model
@@ -75,6 +77,7 @@ MedCalc-Bench evaluation of Qwen/Qwen2.5-7B-Instruct
 | `report.first_failures` | how often each step is the first to fail, and the E2E accuracy in each case |
 | `report.consistency` | E2E accuracy when every step succeeds and when a step fails |
 | `report.prompt_sensitivity` | with `prompt_variants=3`: accuracy per step and wording, mean, sd, range ([section 10](#10-prompt-design-and-robustness)) |
+| `report.by_label` | accuracy per item label: custom variants (`Kg`) and paraphrases (`K@v2`) |
 | `report.scores`, `report.items` | every answer (text, verdict) and every prompt, for your own analyses |
 
 Everything is saved in `output_dir` (default `medcalc_eval/<model id>/`): the items, `generations.jsonl` (written
@@ -232,13 +235,14 @@ correct), plus details that depend on the probe (see below).
 (accuracy among well-formed answers) and `overall` (accuracy over all answers). Only well-formed answers can be
 correct, so `overall = well_formed × competence`.
 
-## 5. The five probes
+## 5. The probes
 
 | probe | the model ends with | reference | verdict details | error types |
 |---|---|---|---|---|
 | E | `{"<field>": {"value": …, "unit": …}, …}` | `fields`, `gold` | `fields` (result per field), `field_accuracy` | `format_invalid`, or the most frequent field error: `missing`, `wrong_value`, `unit_error`, `unparsable`, `unit_unparsable`, `hallucinated`, `gold_unconvertible` |
+| U | `{"value": …}` | `field`, `source_value`, `source_unit`, `target_unit`, `gold_value` | `rel_error` | `format_invalid`, `unconverted`, `inverse_factor`, `wrong_value` |
 | K | `{"cases": [{"condition": …, "formula": …}]}` (patient mode: `{"formula": …}`) | `entities`, `symbols`, `answer`, `point_entities` | `point_pass_rate`, `original_point_correct`, `n_points`, `points` (with `details=True`) | `format_invalid`, `unparsable_formula`, `unknown_variable`, `wrong_at_patient_point`, `wrong_elsewhere` |
-| S | `{"expression": …}` | `formula`, `values`, `gold_expression`, `gold_value` | `value_matches`, `missing_variables`, `match` | `format_invalid`, `unparsable_expression`, `unsubstituted_variable`, `premature_computation`, `missing_or_wrong_value`, `accidental_value_match`, `structure_or_assignment_error`, `too_ambiguous` |
+| S | `{"expression": …}` | `formula`, `values`, `gold_expression`, `gold_value` | `value_matches`, `missing_variables`, `match` | `format_invalid`, `unparsable_expression`, `unsubstituted_variable`, `premature_computation`, `missing_or_wrong_value`, `accidental_value_match`, `structure_or_assignment_error`, `too_ambiguous`, `unconverted_value` (S+U) |
 | A | `{"result": …}` | `expression`, `gold_value` | `rel_error`, `correct_strict` | `format_invalid`, `arithmetic_error` |
 | E2E | `{"answer": …}`: a number, `"MM/DD/YYYY"` or `{"weeks": …, "days": …}` | `ground_truth`, `lower`, `upper`, `answer_type` | `rel_error` (numbers), `error_days` (dates) | `format_invalid`, `out_of_bounds`, `wrong_date`, `wrong_duration` |
 
@@ -247,14 +251,21 @@ How each probe decides:
 - **E**: field by field. Quantities are converted to canonical units on both sides (unit spellings such as
   `mg/dl`, `meq/L`, `inches`, `/µL` are normalised), relative tolerance 1 %. A value copied with the unit written in
   the note is accepted even if the annotation used another unit. Correct if every field is correct.
+- **U**: one of the patient's values (creatinine, sodium, glucose, calcium, BUN, albumin, lipids, weight, height) is
+  given in another plausible unit, drawn reproducibly from `conversion.UNIT_TABLE` (e.g. creatinine in µmol/L), and
+  must be converted to the unit of the registry's formula (mg/dL). The prompt names the substance, never its molar
+  mass or valence. Relative tolerance 1 %; copying the number back is `unconverted`, applying the factor the wrong
+  way is `inverse_factor`. Built only for examples with such a value (24 of the 33 equation-based calculators).
 - **K**: the formula is evaluated at the patient's point and at up to 50 other points (real patients of the same
   calculator from `k_pool`, or perturbations of the patient), and compared with the registry (1 %). Correct only if
-  right at every point. In the default `general` mode the prompt depends on the patient only through categorical
+  right at every point; `min_pass_rate=0.95` accepts a formula right at 95 % of the points (never one that is wrong
+  at the patient's point). In the default `general` mode the prompt depends on the patient only through categorical
   fields (sex, drugs…), so many examples share a prompt: `summary` counts each distinct prompt once. In `patient`
   mode the model sees the values and writes the formula of the patient's branch.
 - **S**: structural identity with the expected expression (reordering accepted), otherwise numerical equivalence
   after mapping the numbers back to variables. A partly computed answer is *not* a substitution, even if its value
-  is right (`premature_computation`).
+  is right (`premature_computation`). Variant **S+U**: `substitution.build(ex, value_units={"scr": "µmol/L"})` gives
+  some values in another unit; the model converts them while substituting (numbers matched within 1 %).
 - **A**: relative error ≤ 1 % (`correct`) and ≤ 0.1 % (`correct_strict`).
 - **E2E**: a number must fall within the benchmark's interval (the exact value for rule-based scores); a date or a
   gestational age (weeks and days) must be exactly right. Dates are read in the usual formats (`06/16/2012`,
@@ -348,10 +359,11 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 | probe | build options | score options |
 |---|---|---|
 | E | `template`, `max_new_tokens`, `system_prompt`, `kind_hints`, `field_hints`, `fields` | `rel_tol`, `accept_unit_as_written` |
-| K | `mode` (`general`/`patient`), `template`, `max_new_tokens`, `system_prompt`, `n_points`, `symbol_docs`, `digits` | `rel_tol`, `abs_tol`, `n_points`, `case_semantics`, `perturbation_factor`, `plausible_ranges`, `details` |
-| S | `template`, `max_new_tokens`, `system_prompt`, `digits`, `symbol_docs` | `equiv_rel_tol`, `value_rel_tol` |
+| U | `field`, `source_unit`, `template`, `max_new_tokens`, `system_prompt`, `digits`, `seed` | `rel_tol` |
+| K | `mode` (`general`/`patient`), `template`, `max_new_tokens`, `system_prompt`, `n_points`, `symbol_docs`, `digits` | `rel_tol`, `abs_tol`, `n_points`, `case_semantics`, `perturbation_factor`, `plausible_ranges`, `min_pass_rate`, `details` |
+| S | `template`, `max_new_tokens`, `system_prompt`, `digits`, `symbol_docs`, `value_units` | `equiv_rel_tol`, `value_rel_tol` |
 | A | `template`, `max_new_tokens`, `system_prompt`, `digits` | `rel_tol`, `strict_rel_tol` |
-| E2E | `template`, `max_new_tokens`, `system_prompt` | `rel_tol` (instead of the benchmark interval) |
+| E2E | `template`, `max_new_tokens`, `system_prompt`, `provide` | `rel_tol` (instead of the benchmark interval) |
 
 All builders also take `label`. The placeholders of each template are listed next to its `DEFAULT_TEMPLATE`.
 `template` is either a text or the name of one of the module's wordings (`"v1"`, `"v2"`, `"v3"`, see
@@ -369,6 +381,7 @@ automatically, and nothing of the competence measured:
 | probe | given (interface) | never given (the competence) |
 |---|---|---|
 | E | the list of fields, the JSON format, "the unit as written" | the values, unit conversions |
+| U | the value, its unit, the substance, the target unit | the molar mass, the valence, the factor |
 | K | the variables and their units, the conventions stated in the benchmark question | the formula, the thresholds of the branches, the coefficients |
 | S | the exact formula of the patient's branch, the values | the result, intermediate computations |
 | A | the fully substituted expression | the result; no tool |
@@ -417,7 +430,50 @@ contrast, and the difference is a result in itself.
   when a step fails. If the first is low, the steps do not represent the task faithfully; if the second is high,
   the model reaches the answer by another route (or by chance).
 
-## 11. Good practices
+## 11. Further analyses
+
+**A smaller token budget, without generating again.** With greedy decoding, the first tokens of an answer do not
+depend on the budget, so a run with a large budget also tells what a smaller one would give:
+
+```python
+records = mk.read_records("medcalc_eval/my-model/generations.jsonl")
+cut = mk.evaluate.truncate_records(records, items, {"E2E": 512, "K": 256}, tokenizer)   # any encode/decode
+mk.score_records(cut, items)            # cut answers are classified as truncated
+```
+
+**Interventions on the end-to-end task.** Giving the model what one step would have produced shows how much that
+step costs end to end:
+
+```python
+suite = mk.ProbeSuite({"E2E": {}, "E2E+V": {"task": "E2E", "provide": ("values",)},
+                       "E2E+F": {"task": "E2E", "provide": ("formula",)},
+                       "E2E+VF": {"task": "E2E", "provide": ("values", "formula")}})
+report = mk.evaluate_model(model, items=suite.build(ds.filter(split="test").equation_only()), dataset=ds)
+report.by_label                         # accuracy with no help, with the values, the formula, or both
+```
+
+`provide` adds the correct values (in the formula's units) and/or the formula of the patient's branch, from the
+registry, after the question; the scoring does not change.
+
+**An LLM judge for the free reasoning (secondary analysis).** The end-to-end answer is always scored
+deterministically. To locate where a wrong reasoning goes astray, a judge model can read it next to the registry's
+full computation and name the first wrong step:
+
+```python
+notes = mk.judge.annotate(items, "medcalc_eval/my-model/generations.jsonl", judge_model,
+                          dataset=ds, out_path="judge/my-model.jsonl")
+notes.first_error.value_counts()        # none, extraction, conversion, formula, substitution, arithmetic, other
+mk.judge.agreement(notes, human_labels) # raw agreement, Cohen's kappa, confusion matrix
+```
+
+The judge is blind: its prompt holds the note, the question, the reference computation and the reasoning, nothing
+about the model or the condition. Validate it on human labels (`agreement`) before using its annotations, and
+report them as a secondary analysis.
+
+**Models modified in memory.** `HFBackend.from_model(model, tokenizer)` wraps a model already loaded, for example
+pruned or quantized in the same session, without loading it again.
+
+## 12. Good practices
 
 - **Pin the dataset revision.** `mk.load()` uses `data.DEFAULT_REVISION`, the version the registry was verified
   against. Pass `revision=` explicitly in papers and record it.
@@ -432,7 +488,7 @@ contrast, and the difference is a result in itself.
 - **Check your pipeline without a model**: score `mk.reference_answer(item)` for every item; everything should be
   correct (this is part of the test suite on the full test split).
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | symptom | cause and fix |
 |---|---|

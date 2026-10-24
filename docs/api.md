@@ -1,6 +1,6 @@
 # API reference
 
-medcalc-kit 0.4.0. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
+medcalc-kit 0.5.0. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
 
 See also the [user guide](guide.md) and the [calculator list](calculators.md).
 

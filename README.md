@@ -13,6 +13,7 @@ QTc, CHA2DS2-VASc, due date…). `medcalc-kit` evaluates a model at two levels:
 | probe | name          | the model is given…                         | it must…                                  |
 |-------|---------------|---------------------------------------------|-------------------------------------------|
 | `E`   | extraction    | the note and the list of fields             | report each value with its unit as written |
+| `U`   | conversion    | one value in another unit, the formula's unit | convert it                              |
 | `K`   | knowledge     | the question and the variables (no values)  | write the general formula, one case per branch |
 | `S`   | substitution  | the formula and the values                  | plug the values in, without computing     |
 | `A`   | arithmetic    | the fully substituted expression            | compute it                                |
@@ -125,10 +126,20 @@ mk.reference_answer(item)                       # an answer the scorer accepts (
 mk.score(item, model_text)                      # {'format_valid', 'correct', 'error_type', ...}
 ```
 
+## Further analyses
+
+- `mk.evaluate.truncate_records(records, items, {"E2E": 512}, tokenizer)`: what a smaller token budget would give,
+  without generating again.
+- `end_to_end.build(ex, provide=("values", "formula"))`: interventions that give the model the correct values and/or
+  formula (labels `E2E+V`, `E2E+F`, `E2E+VF`), to measure what each step costs end to end.
+- `mk.judge.annotate(...)`: an optional, blind LLM judge that names the first wrong step of a free reasoning, with
+  `mk.judge.agreement` against human labels. A secondary analysis: final answers are always scored deterministically.
+- `HFBackend.from_model(model, tokenizer)`: evaluate a model modified in memory (pruned, quantized) without reloading.
+
 Each answer is first classified as `empty`, `truncated`, `degenerate` (looping), `format_invalid` or
 `well_formed`; only well-formed answers can be correct. `competence` is the accuracy among well-formed answers, so
 format failures and reasoning failures are reported separately. How each probe scores, its error types and all
-options are in the [user guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md#5-the-five-probes).
+options are in the [user guide](https://github.com/houenagnon/medcalc-kit/blob/main/docs/guide.md#5-the-probes).
 
 ## Everything is a parameter
 
@@ -149,9 +160,10 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 | `medcalc_kit.benchmark` | `evaluate_model`, `EvaluationReport` |
 | `medcalc_kit.data` | `load`, `demo`, `MedCalcDataset`, `Example`; leakage and quality control (`usable_train_pool`, `flag_train_rows`) |
 | `medcalc_kit.calculators` | `derive` (`.to_frame()`), `table`, `get`, `verify_registry`; `python -m medcalc_kit.calculators.verify` |
-| `medcalc_kit.probes` | `extraction`, `knowledge`, `substitution`, `arithmetic`, `end_to_end` (each: `build`, `score`, `reference_answer`), `ProbeSuite`, `score`, `prompt`, `read_items` / `write_items` |
+| `medcalc_kit.probes` | `extraction`, `conversion`, `knowledge`, `substitution`, `arithmetic`, `end_to_end` (each: `build`, `score`, `reference_answer`), `ProbeSuite`, `score`, `prompt`, `read_items` / `write_items` |
 | `medcalc_kit.generation` | `run_items`, `read_records`, `classify_generation`; `generation.hf.HFBackend` |
-| `medcalc_kit.evaluate` | `score_records`, `summary`, `to_units` |
+| `medcalc_kit.evaluate` | `score_records`, `truncate_records`, `summary`, `to_units` |
+| `medcalc_kit.judge` | `annotate`, `agreement`, `build`, `parse` (optional LLM judge, secondary analysis) |
 | `medcalc_kit.expr`, `units`, `parsing` | safe expression parser/evaluator, unit conversions, JSON / number extraction |
 
 ## Conventions and known deviations
