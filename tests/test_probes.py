@@ -132,7 +132,7 @@ def test_K_rejects_unknown_variables_and_bad_format():
     assert r["error_type"] == "unknown_variable"
     assert score_K(item["reference"], "the formula is eGFR = 142 ...", "3")["format_valid"] is False
     r = score_K(item["reference"], wrap({"cases": [{"condition": "always", "formula": "__import__('os')"}]}), "3")
-    assert r["format_valid"] is False
+    assert r["correct"] is False and r["error_type"] == "invalid_syntax"      # rejected, never executed
 
 
 # ---------------------------------------------------------------- S

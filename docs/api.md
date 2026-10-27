@@ -1,6 +1,6 @@
 # API reference
 
-medcalc-kit 0.5.0. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
+medcalc-kit 0.5.3. Generated from the docstrings by `docs/build_docs.py`; every example is run by the test suite (`tests/test_docs.py`). Examples marked as needing the dataset download it from the Hugging Face Hub; the others use `mk.data.demo()`, four hand-written examples.
 
 See also the [user guide](guide.md) and the [calculator list](calculators.md).
 
@@ -1559,11 +1559,29 @@ with the registry. It is correct if it is right at the patient's point and at a 
 `min_pass_rate` (default 1.0: every point). Symbolic comparison is avoided on purpose:
 branches, rounded constants and equivalent rewritings make it fragile.
 
+Definitions: an answer may define intermediate quantities from the listed variables, {"definitions": {"rr": "60 / hr"},
+"formula": "qt / sqrt(rr)"}; each definition may use the variables and the definitions before it, and the formula
+(and conditions) the variables and every definition. The templates "d1" ask for this form: the model writes the
+formula as it is usually written and links its quantities to the variables given, instead of composing a single
+expression of variables that are not the formula's own; "d2" also asks to think step by step (state the formula, then
+link its quantities), and "d2-v2", "d2-v3" are its paraphrases. Definitions the answer does not use, and identities
+such as "glucose": "glucose", are ignored.
+An answer without definitions is scored as before.
+
+Units: the variables are given in the registry's units by default. `build(formula_units=FORMULA_UNITS)` gives
+some of them in the units of the formula's original publication instead (Devine's ideal body weight is defined per
+inch of height), so that K measures the formula without a unit conversion to write (probe U measures conversions).
+
 In "general" mode the prompt depends on the patient only through categorical fields, so many examples share
 the same prompt: count each distinct prompt once in statistics (generation.prompt_key, evaluate.to_units).
 
-Error types: format_invalid, unparsable_formula, unknown_variable (a name not in the listed variables),
-wrong_at_patient_point, wrong_elsewhere (right for this patient only: wrong branch or wrong constant).
+Error types: format_invalid (no JSON formula), unparsable_formula (a case without a formula string),
+undefined_function (a function outside the grammar, e.g. ideal_body_weight(height)), invalid_syntax (not an expression
+of the grammar, e.g. Python's "x if c else y"), unknown_variable (a name not in the listed variables),
+invalid_definition (definitions that are not {name: expression}, or a used definition that is not a name and an
+expression, or that redefines a listed variable, e.g. "hr": "90"),
+wrong_at_patient_point, wrong_elsewhere (right for this patient only: wrong branch or wrong constant). The answers of
+the undefined_function and invalid_syntax kinds have the requested format: they count as well formed and wrong.
 
 ```python
 >>> item = build(mk.data.demo()[2])                         # anion gap, variables na, cl, hco3
@@ -1576,7 +1594,7 @@ True
 ### `probes.knowledge.build`
 
 ```python
-def build(example: Example | dict[str, Any], point_pool: list[dict[str, Any]] | None = None, *, mode: str = 'general', template: str | None = None, max_new_tokens: int = 1024, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, n_points: int = 50, symbol_docs: dict[str, str] | None = None, digits: int = 6, label: str = 'K') -> Item
+def build(example: Example | dict[str, Any], point_pool: list[dict[str, Any]] | None = None, *, mode: str = 'general', template: str | None = None, max_new_tokens: int = 1024, system_prompt: str | None = DEFAULT_SYSTEM_PROMPT, n_points: int = 50, symbol_docs: dict[str, str] | None = None, digits: int = 6, label: str = 'K', formula_units: dict[str, dict[str, str]] | None = None) -> Item
 ```
 
 point_pool: entity dicts of other (leakage-free) patients of the same calculator, used as test points
@@ -1584,9 +1602,12 @@ so that thresholds are explored realistically (in "patient" mode, only those in 
 kept; pass a large pool). Without a pool, perturbations of the patient are used at scoring time.
 mode: "general" (no values shown, one case per branch) or "patient" (values shown, this patient's formula).
 template: prompt text, or the name of a variant ("v1", "v2", "v3") of TEMPLATES ("general" mode) or
-PATIENT_TEMPLATES ("patient" mode); default "v1" (DEFAULT_TEMPLATE / DEFAULT_PATIENT_TEMPLATE).
+PATIENT_TEMPLATES ("patient" mode), or "d1" (answer with definitions, DEFINITION_TEMPLATES /
+DEFINITION_PATIENT_TEMPLATES); default "v1" (DEFAULT_TEMPLATE / DEFAULT_PATIENT_TEMPLATE).
 n_points: test points kept from the pool; symbol_docs: {variable: description} overriding
 common.SYMBOL_DOCS; digits: significant digits of the values shown in "patient" mode.
+formula_units: {calculator_id: {variable: unit}} gives those variables (descriptions, values shown, test points)
+in another unit than the registry's, e.g. FORMULA_UNITS; the reference stores the factors (`variable_scale`).
 
 ```python
 >>> item = build(mk.data.demo()[1], mode="patient")

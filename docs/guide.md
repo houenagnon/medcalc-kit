@@ -243,7 +243,7 @@ correct, so `overall = well_formed × competence`.
 |---|---|---|---|---|
 | E | `{"<field>": {"value": …, "unit": …}, …}` | `fields`, `gold` | `fields` (result per field), `field_accuracy` | `format_invalid`, or the most frequent field error: `missing`, `wrong_value`, `unit_error`, `unparsable`, `unit_unparsable`, `hallucinated`, `gold_unconvertible` |
 | U | `{"value": …}` | `field`, `source_value`, `source_unit`, `target_unit`, `gold_value` | `rel_error` | `format_invalid`, `unconverted`, `inverse_factor`, `wrong_value` |
-| K | `{"cases": [{"condition": …, "formula": …}]}` (patient mode: `{"formula": …}`) | `entities`, `symbols`, `answer`, `point_entities` | `point_pass_rate`, `original_point_correct`, `n_points`, `points` (with `details=True`) | `format_invalid`, `unparsable_formula`, `unknown_variable`, `wrong_at_patient_point`, `wrong_elsewhere` |
+| K | `{"cases": [{"condition": …, "formula": …}]}` (patient mode: `{"formula": …}`) | `entities`, `symbols`, `answer`, `point_entities` | `point_pass_rate`, `original_point_correct`, `n_points`, `points` (with `details=True`) | `format_invalid`, `unparsable_formula`, `undefined_function`, `invalid_syntax`, `unknown_variable`, `wrong_at_patient_point`, `wrong_elsewhere` |
 | S | `{"expression": …}` | `formula`, `values`, `gold_expression`, `gold_value` | `value_matches`, `missing_variables`, `match` | `format_invalid`, `unparsable_expression`, `unsubstituted_variable`, `premature_computation`, `missing_or_wrong_value`, `accidental_value_match`, `structure_or_assignment_error`, `too_ambiguous`, `unconverted_value` (S+U) |
 | A | `{"result": …}` | `expression`, `gold_value` | `rel_error`, `correct_strict` | `format_invalid`, `arithmetic_error` |
 | E2E | `{"answer": …}`: a number, `"MM/DD/YYYY"` or `{"weeks": …, "days": …}` | `ground_truth`, `lower`, `upper`, `answer_type` | `rel_error` (numbers), `error_days` (dates) | `format_invalid`, `out_of_bounds`, `wrong_date`, `wrong_duration` |
@@ -362,7 +362,7 @@ mk.score_records(records, items, scoring={"K_general": {"case_semantics": "first
 |---|---|---|
 | E | `template`, `max_new_tokens`, `system_prompt`, `kind_hints`, `field_hints`, `fields` | `rel_tol`, `accept_unit_as_written` |
 | U | `field`, `source_unit`, `template`, `max_new_tokens`, `system_prompt`, `digits`, `seed` | `rel_tol` |
-| K | `mode` (`general`/`patient`), `template`, `max_new_tokens`, `system_prompt`, `n_points`, `symbol_docs`, `digits` | `rel_tol`, `abs_tol`, `n_points`, `case_semantics`, `perturbation_factor`, `plausible_ranges`, `min_pass_rate`, `details` |
+| K | `mode` (`general`/`patient`), `template`, `max_new_tokens`, `system_prompt`, `n_points`, `symbol_docs`, `digits`, `formula_units` | `rel_tol`, `abs_tol`, `n_points`, `case_semantics`, `perturbation_factor`, `plausible_ranges`, `min_pass_rate`, `details` |
 | S | `template`, `max_new_tokens`, `system_prompt`, `digits`, `symbol_docs`, `value_units` | `equiv_rel_tol`, `value_rel_tol` |
 | A | `template`, `max_new_tokens`, `system_prompt`, `digits` | `rel_tol`, `strict_rel_tol` |
 | E2E | `template`, `max_new_tokens`, `system_prompt`, `provide` | `rel_tol` (instead of the benchmark interval) |

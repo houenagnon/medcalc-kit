@@ -76,3 +76,19 @@ def test_evaluate_model_with_prompt_variants(tmp_path):
     with pytest.raises(ValueError, match="own template"):
         mk.evaluate_model(model, tmp_path, dataset=ds, split="demo", prompt_variants=2,
                           probe_options={"A": {"template": "Compute {expression}."}})
+
+
+@pytest.mark.parametrize("family", ["general", "patient"])
+def test_definition_template_paraphrases(family):
+    templates = knowledge.DEFINITION_TEMPLATES if family == "general" else knowledge.DEFINITION_PATIENT_TEMPLATES
+    variants = [templates[n] for n in ("d2", "d2-v2", "d2-v3")]
+    assert len(set(variants)) == 3
+    names = [set(PLACEHOLDER.findall(t)) for t in variants]
+    assert all(n == names[0] for n in names), names
+    key = '"cases"' if family == "general" else '"formula"'
+    assert all('"definitions"' in t and key in t and "step by step" in t.lower() for t in variants)
+    ex = mk.data.demo()[1]
+    mode = "general" if family == "general" else "patient"
+    for name in ("d2", "d2-v2", "d2-v3"):
+        item = knowledge.build(ex, mode=mode, template=name)
+        assert item["template"] == name and not PLACEHOLDER.search(item["messages"][-1]["content"].replace('{"', ''))

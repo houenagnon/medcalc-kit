@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.3 — unreleased
+- K: an answer may define intermediate quantities from the listed variables, `{"definitions": {"rr": "60 / hr"},
+  "formula": "qt / sqrt(rr)"}` (in order; conditions may use them too); new error `invalid_definition`. Answers without
+  definitions are scored as before; unused definitions and identities (`"glucose": "glucose"`) are ignored.
+- K: templates `"d1"` (general and patient modes) ask for the formula as usually written, with definitions linking its
+  quantities to the variables given, and no longer ask to think briefly; `"d2"` also asks to think step by step. The
+  default stays `"v1"`: default items are unchanged. `"d2-v2"`, `"d2-v3"`: paraphrases of d2.
+
+## 0.5.2 — unreleased
+- K: `build(formula_units={calculator_id: {variable: unit}})` gives variables in another unit than the registry's
+  (descriptions, values shown and test points), so that K can measure a formula without a unit conversion to write.
+  `knowledge.FORMULA_UNITS` gives the height in inches for the Devine ideal body weight (calculators 2, 10, 62), the
+  unit of its original definition. The reference stores `variable_units` and `variable_scale`; default items are
+  unchanged.
+
+## 0.5.1 — unreleased
+- K: a JSON formula outside the grammar is now a well-formed wrong answer (`undefined_function`, e.g.
+  `ideal_body_weight(height)`, or `invalid_syntax`, e.g. Python's `x if c else y`), not a format error counted as a
+  generation artifact; `error_detail` gives the parser's message. A case without a formula string stays
+  `unparsable_formula`.
+
 ## 0.5.0 — unreleased
 Default items (messages, references) and verdicts are unchanged: tests/test_regression.py checks them on
 mk.data.demo() against a frozen snapshot.

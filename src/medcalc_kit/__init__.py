@@ -22,7 +22,7 @@ from medcalc_kit.evaluate import score_records, summary
 from medcalc_kit.generation import read_records, run_items
 from medcalc_kit.probes import ProbeSuite, reference_answer, score
 
-__version__ = "0.5.0"
+__version__ = "0.5.3"
 
 __all__ = ["EvaluationReport", "ProbeSuite", "benchmark", "calculators", "data", "derive", "evaluate", "evaluate_model",
            "expr", "generation", "judge", "load", "parsing", "probes", "read_records", "reference_answer", "run_items",

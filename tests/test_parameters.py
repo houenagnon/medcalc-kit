@@ -154,3 +154,81 @@ def test_e_fields_option_applies_to_every_example():
     fields = {"weight": "quantity"}
     items = ProbeSuite({"E": {"fields": fields}}).build(mk.data.demo().filter(calculator=[6, 2]))
     assert all(set(ref["fields"]) == {"weight"} for ref in items.reference)
+
+
+def test_knowledge_formula_outside_the_grammar_is_a_wrong_answer_not_an_artifact():
+    item = knowledge.build(mk.data.demo()[1], mode="patient")
+    v = knowledge.score(item, '{"formula": "weight / bmi_factor(height)"}')
+    assert v["format_valid"] and not v["correct"] and v["error_type"] == "undefined_function"
+    v = knowledge.score(item, '{"formula": "weight / (height / 100)^2 if weight > 0 else 0"}')
+    assert v["format_valid"] and not v["correct"] and v["error_type"] == "invalid_syntax"
+    assert knowledge.score(item, '{"formula": ""}')["error_type"] == "unparsable_formula"
+    assert not knowledge.score(item, "no json here")["format_valid"]
+    rec = {"item_id": item["item_id"], "text": '{"formula": "weight / bmi_factor(height)"}', "n_new_tokens": 12}
+    row = mk.score_records([rec], [item]).iloc[0]
+    assert row.category == "well_formed" and not row.correct
+
+
+def test_knowledge_formula_units():
+    ibw = Example.from_row({"example_id": "x:10:1", "Calculator ID": "10", "Calculator Name": "Ideal Body Weight",
+                            "Question": "IBW?", "entities": {"sex": "Male", "height": [178, "cm"]}})
+    plain = knowledge.build(ibw, mode="patient")
+    assert "variable_scale" not in plain["reference"]                       # default items unchanged
+    item = knowledge.build(ibw, mode="patient", formula_units=knowledge.FORMULA_UNITS)
+    prompt = item["messages"][-1]["content"]
+    assert "- height: height (in)" in prompt and "- height = 70.0787" in prompt
+    assert item["reference"]["variable_units"] == {"height": "in"}
+    assert knowledge.score(item, '{"formula": "50 + 2.3 * (height - 60)"}')["correct"]
+    assert not knowledge.score(item, '{"formula": "50 + 2.3 * (height / 2.54 - 60)"}')["correct"]
+    assert knowledge.score(plain, '{"formula": "50 + 2.3 * (height / 2.54 - 60)"}')["correct"]
+    assert knowledge.score(item, mk.reference_answer(item))["correct"]
+    general = knowledge.build(ibw, formula_units=knowledge.FORMULA_UNITS)  # "general" mode, perturbed points
+    assert knowledge.score(general, '{"cases": [{"condition": "always", "formula": "50 + 2.3 * (height - 60)"}]}')[
+        "correct"]
+    # Cockcroft-Gault (overweight woman: adjusted body weight) and an untouched calculator
+    cg = knowledge.build(CG, cg_pool(), mode="patient", formula_units=knowledge.FORMULA_UNITS)
+    ibw_in = "45.5 + 2.3 * (height - 60)"
+    good = {"formula": f"(140 - age) * ({ibw_in} + 0.4 * (weight - ({ibw_in}))) * 0.85 / (72 * scr)"}
+    assert knowledge.score(cg, json.dumps(good))["correct"]
+    assert knowledge.score(cg, mk.reference_answer(cg))["correct"]
+    bmi = knowledge.build(mk.data.demo()[1], mode="patient", formula_units=knowledge.FORMULA_UNITS)
+    assert bmi == knowledge.build(mk.data.demo()[1], mode="patient")
+    with pytest.raises(ValueError):
+        knowledge.build(ibw, formula_units={"10": {"weight": "lbs"}})
+
+
+def test_knowledge_definitions():
+    qt = Example.from_row({"example_id": "x:11:1", "Calculator ID": "11", "Calculator Name": "QTc Bazett Calculator",
+                           "Question": "QTc (Bazett)?", "entities": {"Heart Rate or Pulse": [120, "beats per minute"],
+                                                                      "QT Interval": [400, "msec"]}})
+    item = knowledge.build(qt, mode="patient", template="d1")
+    prompt = item["messages"][-1]["content"]
+    assert '"definitions"' in prompt and "think briefly" not in prompt and item["template"] == "d1"
+    assert knowledge.build(qt, mode="patient")["template"] == "v1"                       # default unchanged
+    sym = item["reference"]["symbols"]
+    hr, q = (s for s in sorted(sym, key=lambda s: s != "hr"))
+    ok = json.dumps({"definitions": {"rr": f"60 / {hr}"}, "formula": f"{q} / sqrt(rr)"})
+    assert knowledge.score(item, ok)["correct"]
+    assert knowledge.score(item, json.dumps({"formula": f"{q} / sqrt(60 / {hr})"}))["correct"]   # no definitions
+    chained = {"definitions": [{"name": "rr", "expression": f"60 / {hr}"}, {"name": "s", "expression": "sqrt(rr)"}],
+               "formula": f"{q} / s"}
+    assert knowledge.score(item, json.dumps(chained))["correct"]
+    assert knowledge.score(item, json.dumps({"definitions": {}, "formula": f"{q} / sqrt(60 / {hr})"}))["correct"]
+    wrong = knowledge.score(item, json.dumps({"definitions": {"rr": f"{hr} / 100"}, "formula": f"{q} / sqrt(rr)"}))
+    assert wrong["format_valid"] and wrong["error_type"] == "wrong_at_patient_point"
+    v = knowledge.score(item, json.dumps({"definitions": {"rr": f"60 / {hr}"}, "formula": f"{q} / sqrt(rr2)"}))
+    assert v["error_type"] == "unknown_variable" and v["unknown_variables"] == ["rr2"]
+    later = {"definitions": {"s": "sqrt(rr)", "rr": f"60 / {hr}"}, "formula": f"{q} / s"}    # used before defined
+    assert knowledge.score(item, json.dumps(later))["error_type"] == "unknown_variable"
+    for bad in ({hr: "1"}, ["rr"]):
+        v = knowledge.score(item, json.dumps({"definitions": bad, "formula": f"{q} / sqrt(60 / {hr})"}))
+        assert v["format_valid"] and v["error_type"] == "invalid_definition"
+    assert knowledge.score(item, json.dumps({"definitions": {"rr": 3}, "formula": f"{q} / sqrt(rr)"}))[
+        "error_type"] == "invalid_definition"
+    # ignored: unused definitions (even malformed) and identities
+    harmless = {"definitions": {hr: hr, "QT/RR ratio": "x", "rr": 3}, "formula": f"{q} / sqrt(60 / {hr})"}
+    assert knowledge.score(item, json.dumps(harmless))["correct"]
+    assert "Think step by step" in knowledge.build(qt, mode="patient", template="d2")["messages"][-1]["content"]
+    general = knowledge.build(qt, template="d1")
+    cases = {"definitions": {"rr": f"60 / {hr}"}, "cases": [{"condition": "rr > 0", "formula": f"{q} / sqrt(rr)"}]}
+    assert knowledge.score(general, json.dumps(cases))["correct"]
